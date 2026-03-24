@@ -103,40 +103,40 @@
       "context": "Spec at ~/Documents/Gushon/projects/cloudsync/SPEC.md. Desktop app watches local folder, syncs to R2, files at public URL. Staging→production promote. Free tier 1 project/500MB. Open questions: brand name, pricing, auth method, Tauri vs Electron.",
       "tasks": [
         {
-          "title": "Add rtl support in settings (change entire layout to heberew and direction)",
-          "description": "",
-          "status": "todo",
+          "title": "Add rtl support in settings",
+          "description": "Done: dir=rtl on root, sidebar arrow flips, language selector auto-sets RTL for Hebrew/Arabic",
+          "status": "done",
           "priority": "medium",
           "id": "61200c98-c2a1-473f-8469-fc847759b9b4",
           "createdAt": "2026-03-24T21:19:02.129Z"
         },
         {
-          "title": "add keyboard shortcuts for adding new item, and other relevant stuff",
-          "description": "",
-          "status": "todo",
+          "title": "Add keyboard shortcuts",
+          "description": "Done: n=new task, b=toggle board, d=toggle details, s=toggle sidebar, comma=settings. Only fires when no input focused.",
+          "status": "done",
           "priority": "medium",
           "id": "908ceb8a-4b70-4b92-adc5-e3d09832136f",
           "createdAt": "2026-03-24T21:20:27.698Z"
         },
         {
-          "title": "add settings panel with global info edtable, RTL stuff, your name, etc and allow more settings later",
-          "description": "",
-          "status": "todo",
+          "title": "Add settings panel",
+          "description": "Done: SettingsDialog with name, language, RTL toggle, editable global context fields. Persists to localStorage. Opens via avatar click or comma key.",
+          "status": "done",
           "priority": "medium",
           "id": "8cccc6d1-35ad-4c30-afb6-eedc82098f20",
           "createdAt": "2026-03-24T21:21:25.557Z"
         },
         {
-          "title": "let's add a db and auth, we use cf for most things so use it, also push to git, and ",
-          "description": "Consider users and their, uh, boards and their names and their settings and all the things that they use",
+          "title": "Add Cloudflare D1 + Workers backend with auth and API keys",
+          "description": "Move from local data.json to hosted Cloudflare backend. D1 for storage (users, projects, tasks, settings). Workers for REST API. Email/password auth with sessions. API key generation in settings so agents can authenticate. Same API for both UI and agents. Each user has their own projects/tasks/settings. Git repo already pushed to GitHub.",
           "status": "todo",
-          "priority": "medium",
+          "priority": "high",
           "id": "ba3e3bee-a83e-46be-95ac-1e94e38b841a",
           "createdAt": "2026-03-24T21:25:22.947Z"
         },
         {
-          "title": "I guess we need, um, after the description when it's completed, we need the, um, LLM to also add the short description of what he did",
-          "description": "",
+          "title": "Agent should add completion notes when finishing a task",
+          "description": "When an agent marks a task as done, it should also update the description with a short summary of what was actually done. This gives context for future sessions.",
           "status": "todo",
           "priority": "medium",
           "id": "3b123a76-9af1-40ca-b0ed-488f26e7c925",
