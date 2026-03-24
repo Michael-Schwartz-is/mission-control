@@ -69,6 +69,8 @@ function Dashboard() {
   // Reactive queries
   const projects = useQuery(api.projects.list) ?? [];
   const columns = useQuery(api.columns.list) ?? [];
+  const adminStats = useQuery(api.admin.stats);
+  const isAdmin = adminStats !== null && adminStats !== undefined;
   const globalContext = useQuery(api.globalContext.get) ?? {};
 
   // Mutations
@@ -181,7 +183,7 @@ function Dashboard() {
           userName={userName}
           userImage={userImage}
           onSettingsClick={() => { setShowSettings(true); setShowAdmin(false) }}
-          onAdminClick={() => { setShowAdmin(true); setShowSettings(false) }}
+          onAdminClick={isAdmin ? () => { setShowAdmin(true); setShowSettings(false) } : undefined}
           onLogout={() => void signOut()}
           newProjectTrigger={newProjectTrigger}
           inSettings={showSettings}

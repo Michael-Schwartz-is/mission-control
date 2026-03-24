@@ -1,7 +1,7 @@
 import { httpRouter } from "convex/server";
 import { auth } from "./auth";
 import { httpAction } from "./_generated/server";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 
 const http = httpRouter();
 
@@ -36,7 +36,7 @@ async function resolveApiKeyUser(
 function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, PUT, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
 }
@@ -62,7 +62,7 @@ http.route({
         headers: { ...corsHeaders(), "Content-Type": "application/json" },
       });
     }
-    const data = await ctx.runQuery(api.data.getAll, { userId });
+    const data = await ctx.runQuery(internal.data.getAll, { userId });
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders(), "Content-Type": "application/json" },
     });
@@ -82,7 +82,7 @@ http.route({
       });
     }
     const body = await req.json();
-    await ctx.runMutation(api.data.importAll, { userId, data: body });
+    await ctx.runMutation(internal.data.importAll, { userId, data: body });
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders(), "Content-Type": "application/json" },
     });

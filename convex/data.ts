@@ -1,9 +1,9 @@
-import { query, mutation } from "./_generated/server";
+import { internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
-// Bulk data endpoints for agent API (userId passed explicitly from HTTP action)
+// Internal only — called by HTTP actions, not directly by clients
 
-export const getAll = query({
+export const getAll = internalQuery({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
     const uid = userId as any; // Trust the HTTP action layer
@@ -75,7 +75,7 @@ export const getAll = query({
   },
 });
 
-export const importAll = mutation({
+export const importAll = internalMutation({
   args: {
     userId: v.string(),
     data: v.any(),
