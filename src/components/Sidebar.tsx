@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { Project, GlobalContext } from '@/types'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -13,13 +13,69 @@ interface SidebarProps {
   onAddProject: (name: string) => void
   onDeleteProject: (id: string) => void
   userName: string
+  userImage?: string | null
   onSettingsClick: () => void
+  onLogout?: () => void
+  newProjectTrigger?: number
 }
 
-export function Sidebar({ projects, global, selectedId, onSelect, onAddProject, onDeleteProject, userName, onSettingsClick }: SidebarProps) {
-  const [showGlobal, setShowGlobal] = useState(false)
+function UserDropdown({ userName, userImage, onLogout }: {
+  userName: string
+  userImage?: string | null
+  onLogout?: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 w-full px-3 py-2 hover:bg-sidebar-accent/50 rounded-md transition-colors"
+      >
+        {userImage ? (
+          <img src={userImage} alt="" className="w-6 h-6 rounded-full shrink-0" />
+        ) : (
+          <span className="w-6 h-6 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center text-[10px] font-bold shrink-0">
+            {userName.charAt(0).toUpperCase()}
+          </span>
+        )}
+        <span className="text-xs text-sidebar-foreground truncate text-left">{userName}</span>
+        <span className="text-xs text-sidebar-foreground/40">{open ? '▴' : '▾'}</span>
+      </button>
+      {open && onLogout && (
+        <div className="absolute left-1 right-1 top-full mt-1 bg-popover border rounded-md shadow-md z-50 py-1">
+          <button
+            onClick={() => { setOpen(false); onLogout() }}
+            className="w-full text-left px-3 py-1.5 text-xs text-popover-foreground hover:bg-accent transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDeleteProject, userName, userImage, onSettingsClick, onLogout, newProjectTrigger }: SidebarProps) {
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
+  const [lastTrigger, setLastTrigger] = useState(0)
+
+  if (newProjectTrigger && newProjectTrigger !== lastTrigger) {
+    setLastTrigger(newProjectTrigger)
+    setAdding(true)
+    setNewName('')
+  }
 
   const handleAdd = () => {
     if (!newName.trim()) return
@@ -30,25 +86,23 @@ export function Sidebar({ projects, global, selectedId, onSelect, onAddProject, 
 
   return (
     <div className="w-48 shrink-0 bg-sidebar flex flex-col h-screen text-xs">
-      <div className="px-3 py-3 flex items-center gap-2">
-        <button
-          onClick={onSettingsClick}
-          className="w-6 h-6 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center text-[10px] font-bold shrink-0 hover:opacity-80 transition-opacity"
-          title="Settings"
-        >
-          {userName.charAt(0).toUpperCase()}
-        </button>
-        <span className="text-xs text-sidebar-foreground truncate flex-1">{userName}</span>
+      <div className="flex items-center">
+        <div className="flex-1 min-w-0">
+          <UserDropdown
+            userName={userName}
+            userImage={userImage}
+            onLogout={onLogout}
+          />
+        </div>
         <button
           onClick={() => setAdding(true)}
-          className="text-sidebar-foreground/40 hover:text-sidebar-foreground text-sm transition-colors"
-          title="New project (N)"
+          className="text-sidebar-foreground/40 hover:text-sidebar-foreground text-sm transition-colors px-2 py-2 shrink-0"
+          title="New project"
         >
           +
         </button>
       </div>
       <ScrollArea className="flex-1">
-        <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/30">Projects</div>
         <div className="p-2 space-y-0.5">
           {projects.map((project) => {
             const taskCount = project.tasks.filter((t) => t.status !== 'done').length
@@ -85,38 +139,27 @@ export function Sidebar({ projects, global, selectedId, onSelect, onAddProject, 
         </div>
 
         {adding && (
-          <div className="px-2 pb-2 flex gap-1">
+          <div className="px-2 pb-2">
             <Input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setAdding(false) }}
-              placeholder="Project name"
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') { setAdding(false); setNewName('') } }}
+              onBlur={() => { if (!newName.trim()) { setAdding(false); setNewName('') } }}
+              placeholder="Project name — Enter to create"
               autoFocus
               className="h-7 text-xs"
             />
-            <button onClick={handleAdd} className="text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground px-1">+</button>
-            <button onClick={() => setAdding(false)} className="text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground px-1">x</button>
           </div>
         )}
 
       </ScrollArea>
       <div className="p-2">
         <button
-          onClick={() => setShowGlobal((v) => !v)}
-          className="w-full text-left px-3 py-1.5 rounded-md text-xs font-medium text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50 transition-colors"
+          onClick={onSettingsClick}
+          className="w-full text-left px-3 py-1.5 rounded-md text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50 transition-colors"
         >
-          {showGlobal ? '▾' : '▸'} Global Context
+          Preferences
         </button>
-        {showGlobal && (
-          <div className="px-3 py-2 space-y-1.5 text-[10px] max-h-48 overflow-y-auto">
-            {Object.entries(global).map(([key, value]) => (
-              <div key={key}>
-                <span className="text-sidebar-foreground/40">{key}: </span>
-                <span className="text-sidebar-foreground/70 break-all">{value}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   )

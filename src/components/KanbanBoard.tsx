@@ -1,21 +1,23 @@
 import { useState } from 'react'
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import type { AppData, Project, Task, Column } from '@/types'
-import { getColumns } from '@/types'
+import type { Project, Task, Column } from '@/types'
 import { KanbanColumn } from './KanbanColumn'
 import { TaskDialog } from './TaskDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { moveTask, addTask, updateTask, deleteTask, addColumn } from '@/store'
 
 interface KanbanBoardProps {
   project: Project
-  data: AppData
-  onChange: (data: AppData) => void
+  columns: Column[]
+  onMoveTask: (taskId: string, newStatus: string) => void
+  onAddTask: (task: { title: string; description?: string; status?: string; priority?: string }) => void
+  onUpdateTask: (taskId: string, updates: { title?: string; description?: string; status?: string; priority?: string }) => void
+  onDeleteTask: (taskId: string) => void
+  onAddColumn: (label: string) => void
   newTaskTrigger?: number
 }
 
-export function KanbanBoard({ project, data, onChange, newTaskTrigger }: KanbanBoardProps) {
+export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateTask, onDeleteTask, onAddColumn, newTaskTrigger }: KanbanBoardProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isNew, setIsNew] = useState(false)
@@ -30,8 +32,6 @@ export function KanbanBoard({ project, data, onChange, newTaskTrigger }: KanbanB
   const [addingColumn, setAddingColumn] = useState(false)
   const [newColumnName, setNewColumnName] = useState('')
 
-  const columns: Column[] = getColumns(data, project)
-
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   )
@@ -43,13 +43,7 @@ export function KanbanBoard({ project, data, onChange, newTaskTrigger }: KanbanB
     const newStatus = over.id as string
     const task = project.tasks.find((t) => t.id === taskId)
     if (!task || task.status === newStatus) return
-    onChange(moveTask(data, project.id, taskId, newStatus))
-  }
-
-  const openNew = () => {
-    setSelectedTask(null)
-    setIsNew(true)
-    setDialogOpen(true)
+    onMoveTask(taskId, newStatus)
   }
 
   const openEdit = (task: Task) => {
@@ -60,30 +54,58 @@ export function KanbanBoard({ project, data, onChange, newTaskTrigger }: KanbanB
 
   const handleSave = (form: Partial<Task> & { title: string }) => {
     if (isNew) {
-      onChange(addTask(data, project.id, {
+      onAddTask({
         title: form.title,
         description: form.description || '',
         status: form.status || 'todo',
         priority: form.priority || 'medium',
-      }))
+      })
     } else if (selectedTask) {
-      onChange(updateTask(data, project.id, selectedTask.id, form))
+      onUpdateTask(selectedTask.id, form)
     }
-  }
-
-  const handleDeleteTask = (taskId: string) => {
-    onChange(deleteTask(data, project.id, taskId))
   }
 
   const handleAddColumn = () => {
     if (!newColumnName.trim()) return
-    onChange(addColumn(data, newColumnName.trim()))
+    onAddColumn(newColumnName.trim())
     setNewColumnName('')
     setAddingColumn(false)
   }
 
   const tasksByStatus = (status: string) =>
     project.tasks.filter((t) => t.status === status)
+
+  if (project.tasks.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4 max-w-xs">
+            <div className="text-sm font-medium text-foreground">No tasks yet</div>
+            <div className="text-xs text-muted-foreground leading-relaxed">
+              Add tasks to track your work. Drag them between columns to update status.
+            </div>
+            <button
+              onClick={() => { setSelectedTask(null); setIsNew(true); setDialogOpen(true) }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+            >
+              + New Task
+            </button>
+            <div className="text-[10px] text-muted-foreground/60">
+              or press <kbd className="px-1 py-0.5 rounded bg-muted text-foreground font-mono">N</kbd>
+            </div>
+          </div>
+        </div>
+        <TaskDialog
+          task={null}
+          isNew={true}
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          onSave={handleSave}
+          columns={columns}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -97,7 +119,7 @@ export function KanbanBoard({ project, data, onChange, newTaskTrigger }: KanbanB
                 label={col.label}
                 tasks={tasksByStatus(col.id)}
                 onTaskClick={openEdit}
-                onTaskDelete={handleDeleteTask}
+                onTaskDelete={onDeleteTask}
               />
             ))}
             {/* Add column */}
@@ -133,7 +155,7 @@ export function KanbanBoard({ project, data, onChange, newTaskTrigger }: KanbanB
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onSave={handleSave}
-        onDelete={selectedTask ? () => handleDeleteTask(selectedTask.id) : undefined}
+        onDelete={selectedTask ? () => onDeleteTask(selectedTask.id) : undefined}
         columns={columns}
       />
     </div>

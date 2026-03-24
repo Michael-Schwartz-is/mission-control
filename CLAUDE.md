@@ -1,142 +1,122 @@
 # Mission Control
 
-Local project dashboard and task board. Single JSON file as the data store — both the UI and Claude agents read/write the same file.
+Project dashboard and task board. Convex backend with Google OAuth. React frontend with real-time subscriptions.
 
-## Running
+## Running (dev)
 
 ```bash
-cd ~/Documents/code/mission-control
+# Terminal 1: Convex backend (watches and deploys functions)
+npx convex dev
+
+# Terminal 2: Frontend (port 5555)
 npm run dev -- --port 5555
 ```
 
-Opens at http://localhost:5555
+Frontend at http://localhost:5555
 
 ## Stack
 
-- Vite + React 19 + TypeScript
-- shadcn/ui + Tailwind CSS v4
-- No backend — Vite dev server plugin serves `data.json` via `/api/data` (GET/PUT)
-- No auth — local only
+- **Frontend**: Vite + React 19 + TypeScript, shadcn/ui + Tailwind CSS v4
+- **Backend**: Convex (real-time database, serverless functions)
+- **Auth**: Convex Auth with Google OAuth
+- **Agent access**: API keys via HTTP actions
 
-## Data File
+## Architecture
 
-All state lives in `~/Documents/code/mission-control/data.json`. This is the single source of truth.
+The frontend uses Convex's reactive `useQuery` hooks — data auto-updates on any change (including writes from agents via API). No polling, no manual refetching.
 
-### Reading data (as an agent)
+- `convex/` — Backend: schema, queries, mutations, HTTP actions
+- `src/` — React frontend with Convex hooks
+- `data.json` — Legacy local data file (for migration reference)
 
-Read the file directly:
-```
-Read ~/Documents/code/mission-control/data.json
-```
+## Auth
 
-### Writing data (as an agent)
+Two auth methods:
+1. **Google OAuth** — via Convex Auth, session managed automatically
+2. **API key** — generated in Settings, sent as `Authorization: Bearer mc_...` to HTTP endpoints
 
-Edit the file directly with the Edit or Write tool. The UI will pick up changes on next load/refresh.
+## Convex Functions
 
-### Data Structure
+### Queries (reactive, auto-update UI)
+- `projects.list` — all projects with their tasks
+- `columns.list` — kanban columns
+- `globalContext.get` — global context data
+- `apiKeys.list` — user's API keys
 
-```json
-{
-  "global": {
-    "apiKeys": "~/Documents/code/template/.env",
-    "vault": "~/Documents/Gushon/",
-    "skills": "~/Documents/Gushon/claw/",
-    "codeRoot": "~/Documents/code/",
-    "linkedin": "~/Documents/Gushon/linkedin/",
-    "claudeMemory": "~/.claude/projects/-Users-michael/memory/",
-    "notes": "free text"
-  },
-  "columns": [
-    { "id": "backlog", "label": "Backlog" },
-    { "id": "todo", "label": "Todo" },
-    { "id": "in_progress", "label": "In Progress" },
-    { "id": "blocked", "label": "Blocked" },
-    { "id": "in_review", "label": "In Review" },
-    { "id": "done", "label": "Done" }
-  ],
-  "projects": [
-    {
-      "id": "aeo",
-      "name": "AEO Lighthouse",
-      "description": "Short description",
-      "repo": "~/Documents/code/AnswerEngineHouse",
-      "stack": "Python, Svelte, etc.",
-      "status": "Live / Idea / MVP / etc.",
-      "context": "Architecture notes, key decisions, anything an agent needs to pick up work on this project",
-      "columns": null,
-      "tasks": [
-        {
-          "id": "unique-id",
-          "title": "Task title",
-          "description": "What needs to happen and why",
-          "status": "todo",
-          "priority": "high",
-          "createdAt": "2026-03-24T00:00:00Z"
-        }
-      ]
-    }
-  ]
-}
+### Mutations
+- `projects.create/update/remove`
+- `tasks.create/update/remove/move`
+- `columns.add`
+- `globalContext.set`
+- `apiKeys.create/remove`
+
+### HTTP Actions (for agents)
+- `GET /api/data` — bulk fetch all data (requires API key)
+- `PUT /api/data` — bulk import data (requires API key)
+
+## Agent Access
+
+Agents authenticate via API key to Convex HTTP endpoints:
+
+```bash
+# Fetch all data
+curl -H "Authorization: Bearer mc_YOUR_KEY" \
+  https://YOUR_DEPLOYMENT.convex.site/api/data
+
+# Import data
+curl -X PUT -H "Authorization: Bearer mc_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d @data.json \
+  https://YOUR_DEPLOYMENT.convex.site/api/data
 ```
 
-### Key fields
+Tasks should be **milestones, sessions, or blockers** — not granular implementation steps.
 
-- **global**: Paths and context that apply across all projects. Agents should check `global.apiKeys` for API keys and `global.vault` for Obsidian notes/specs.
-- **columns**: Default Kanban columns. Projects can override with their own `columns` array.
-- **project.context**: Free-text field for architecture, notes, decisions, specs — the knowledge dump an agent needs to work on the project.
-- **project.status**: Current state of the project (free text).
-- **task.status**: Must match a column `id` from the columns array.
-- **task.priority**: One of `urgent`, `high`, `medium`, `low`.
+## Environment Variables (Convex Dashboard)
 
-### Adding a project (as an agent)
-
-Add an object to the `projects` array in `data.json`:
-```json
-{
-  "id": "kebab-case-id",
-  "name": "Display Name",
-  "description": "",
-  "repo": "",
-  "stack": "",
-  "status": "New",
-  "context": "",
-  "tasks": []
-}
+```bash
+npx convex env set AUTH_GOOGLE_ID <google-client-id>
+npx convex env set AUTH_GOOGLE_SECRET <google-client-secret>
 ```
-
-### Adding a task (as an agent)
-
-Add to a project's `tasks` array. Use `uuid` for `id` or any unique string. Set `status` to a valid column id.
-
-Tasks should be **milestones, sessions, or blockers** — not granular implementation steps. Claude can execute a whole batch of work in one session. A task is something like "Recalibrate scoring system" or "Decision: pick auth method", not "Fix function X" or "Add error handling to Y".
-
-### Updating a task status (as an agent)
-
-Edit the `status` field of the task in `data.json` to any column id.
-
-## UI Layout
-
-- **Left sidebar**: Project list, click to switch. Collapsible with arrow tab.
-- **Top bar**: Project name (uppercase, muted), toggle buttons for Details/Board, + Task button.
-- **Details panel**: Editable project metadata (description, repo, stack, status, context). Collapsible.
-- **Kanban board**: Drag-and-drop tasks between columns. Horizontally scrollable. Add column with + button at end.
-- **Global context**: Collapsible section at bottom of sidebar showing shared paths/config.
-- **All UI state persists** in localStorage (selected project, panel visibility, sidebar state).
 
 ## File Structure
 
 ```
-data.json              — All project/task data (THE source of truth)
-server-plugin.ts       — Vite plugin that serves data.json as /api/data
+convex/
+  schema.ts            — Database schema (authTables + app tables)
+  auth.ts              — Convex Auth config (Google provider)
+  http.ts              — HTTP router (auth callbacks + agent API)
+  projects.ts          — Project queries/mutations
+  tasks.ts             — Task mutations
+  columns.ts           — Column queries/mutations
+  globalContext.ts      — Global context query/mutation
+  apiKeys.ts           — API key management
+  data.ts              — Bulk data get/import (for agent API)
+data.json              — Legacy local data (migration reference)
+server-plugin.ts       — Legacy Vite plugin (unused)
 src/
-  App.tsx              — Main layout, state management, persistence
-  types.ts             — TypeScript types, default columns, helpers
-  store.ts             — Pure functions for data transformations + API calls
+  main.tsx             — ConvexAuthProvider setup
+  auth.tsx             — useAuth hook
+  App.tsx              — Main layout, gates on auth, uses Convex hooks
+  types.ts             — TypeScript types
+  store.ts             — Legacy store (unused by app, kept for tests)
   components/
-    Sidebar.tsx        — Project list, add/delete project, global context
-    ProjectContext.tsx  — Editable project metadata panel
-    KanbanBoard.tsx    — Board with drag-and-drop, add column
-    KanbanColumn.tsx   — Single column with droppable zone
-    TaskCard.tsx       — Draggable task card with delete
-    TaskDialog.tsx     — Create/edit task modal
+    LoginPage.tsx       — Google sign-in
+    Sidebar.tsx         — Project list, logout
+    ProjectContext.tsx   — Editable project metadata
+    KanbanBoard.tsx     — Kanban with drag-and-drop
+    KanbanColumn.tsx    — Single column
+    TaskCard.tsx        — Draggable task card
+    TaskDialog.tsx      — Create/edit task modal
+    SettingsDialog.tsx  — Settings + API key management
 ```
+
+## UI Layout
+
+- **Login page**: Google sign-in button
+- **Left sidebar**: Project list, user avatar, sign out. Collapsible.
+- **Top bar**: Project name, toggle buttons, + Task button
+- **Details panel**: Editable project metadata. Collapsible.
+- **Kanban board**: Drag-and-drop tasks between columns.
+- **Settings**: Preferences, global context, API key management.
+- **Keyboard shortcuts**: n=new task, b=board, d=details, s=sidebar, comma=settings

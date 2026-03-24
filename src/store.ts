@@ -4,7 +4,7 @@ import { v4 as uuid } from 'uuid'
 const DATA_URL = '/api/data'
 
 export async function loadData(): Promise<AppData> {
-  const res = await fetch(DATA_URL)
+  const res = await fetch(DATA_URL, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to load data')
   return res.json()
 }
@@ -12,6 +12,7 @@ export async function loadData(): Promise<AppData> {
 export async function saveData(data: AppData): Promise<void> {
   await fetch(DATA_URL, {
     method: 'PUT',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data, null, 2),
   })

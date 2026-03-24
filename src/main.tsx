@@ -1,12 +1,16 @@
-import { StrictMode, Suspense } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { ConvexAuthProvider } from "@convex-dev/auth/react";
+import { ConvexReactClient } from "convex/react";
+import App from "./App";
+import "./index.css";
 
-createRoot(document.getElementById('root')!).render(
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
+
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Suspense fallback={<div className="h-screen flex items-center justify-center text-muted-foreground">Loading...</div>}>
+    <ConvexAuthProvider client={convex}>
       <App />
-    </Suspense>
-  </StrictMode>,
-)
+    </ConvexAuthProvider>
+  </StrictMode>
+);
