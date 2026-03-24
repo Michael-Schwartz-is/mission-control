@@ -1,0 +1,177 @@
+{
+  "global": {
+    "apiKeys": "~/Documents/code/template/.env",
+    "vault": "~/Documents/Gushon/",
+    "skills": "~/Documents/Gushon/claw/",
+    "codeRoot": "~/Documents/code/",
+    "linkedin": "~/Documents/Gushon/linkedin/",
+    "claudeMemory": "~/.claude/projects/-Users-michael/memory/",
+    "notes": "Obsidian vault is the knowledge base. Template .env has consolidated API keys for all services. Claude memory has user preferences and feedback."
+  },
+  "columns": [
+    {
+      "id": "backlog",
+      "label": "Backlog"
+    },
+    {
+      "id": "todo",
+      "label": "Todo"
+    },
+    {
+      "id": "in_progress",
+      "label": "In Progress"
+    },
+    {
+      "id": "blocked",
+      "label": "Blocked"
+    },
+    {
+      "id": "in_review",
+      "label": "In Review"
+    },
+    {
+      "id": "done",
+      "label": "Done"
+    },
+    {
+      "id": "kisses",
+      "label": "Kisses"
+    }
+  ],
+  "projects": [
+    {
+      "id": "aeo",
+      "name": "AEO Lighthouse",
+      "description": "Lighthouse-style tool scoring websites on Answer Engine Optimization readiness",
+      "repo": "~/Documents/code/AnswerEngineHouse",
+      "stack": "Python 3.10+, Svelte/Astro, Convex, Modal, BeautifulSoup, Playwright, NLTK",
+      "status": "Live — v2.1.2, scoring needs calibration",
+      "context": "5 scoring categories: Structured Data (25%), Content Structure (25%), Technical Foundations (20%), AI Discoverability (20%), Authority & Trust (10%). Grade caps: noindex→F, no HTTPS→D, JS-rendered→C, no schema→B. Key issue: scoring inflation — sites get high scores without truly meeting AEO requirements.",
+      "tasks": [
+        {
+          "id": "aeo-1",
+          "title": "Recalibrate scoring system",
+          "description": "The scoring is inflated. Need a session to audit real sites, identify where scores don't match reality, and redesign the weighting/caps. This is a full rethink, not individual fixes.",
+          "status": "kisses",
+          "priority": "high",
+          "createdAt": "2026-03-24T00:00:00Z"
+        },
+        {
+          "id": "aeo-2",
+          "title": "Brainstorm mini app features",
+          "description": "Run a brainstorming session about what to put inside the mini app",
+          "status": "backlog",
+          "priority": "medium",
+          "createdAt": "2026-03-24T00:00:00Z"
+        },
+        {
+          "title": "jhlkl",
+          "description": "hljkb;ln;,mljhvb;kjb;kjb;",
+          "status": "backlog",
+          "priority": "medium",
+          "id": "fb7c70ee-1e3d-4949-ae8b-1332fba6d209",
+          "createdAt": "2026-03-24T18:30:17.885Z"
+        }
+      ]
+    },
+    {
+      "id": "loops",
+      "name": "Loops",
+      "description": "Live coding tool for Webflow — edit JS locally, syncs to cloud in <1s",
+      "repo": "~/Documents/code/CodeFlow",
+      "stack": "TypeScript monorepo (npm workspaces), Convex backend, Commander.js, Chokidar",
+      "status": "MVP built, needs deployment & real-world testing",
+      "context": "packages/cli/ — CLI tool, packages/convex/ — serverless backend, packages/shared/ — types. Chrome DevTools MCP integration for AI agents. File watcher syncs to cloud via Convex.",
+      "tasks": [
+        {
+          "id": "loops-1",
+          "title": "Deploy and test with real Webflow site",
+          "description": "Deploy to Cloudflare, then end-to-end test: edit JS locally → verify it appears on a real Webflow staging site in <1s. This is the whole validation — deploy + test is one session.",
+          "status": "backlog",
+          "priority": "high",
+          "createdAt": "2026-03-24T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "cloudsync",
+      "name": "CloudSync",
+      "description": "Dropbox for website files — edit locally, live on any website instantly",
+      "repo": "",
+      "stack": "Planned: Tauri, Cloudflare R2/Workers/D1, Stripe",
+      "status": "Idea stage — spec written, no code",
+      "context": "Spec at ~/Documents/Gushon/projects/cloudsync/SPEC.md. Desktop app watches local folder, syncs to R2, files at public URL. Staging→production promote. Free tier 1 project/500MB. Open questions: brand name, pricing, auth method, Tauri vs Electron.",
+      "tasks": [
+        {
+          "title": "Add rtl support in settings (change entire layout to heberew and direction)",
+          "description": "",
+          "status": "todo",
+          "priority": "medium",
+          "id": "61200c98-c2a1-473f-8469-fc847759b9b4",
+          "createdAt": "2026-03-24T21:19:02.129Z"
+        },
+        {
+          "title": "add keyboard shortcuts for adding new item, and other relevant stuff",
+          "description": "",
+          "status": "todo",
+          "priority": "medium",
+          "id": "908ceb8a-4b70-4b92-adc5-e3d09832136f",
+          "createdAt": "2026-03-24T21:20:27.698Z"
+        },
+        {
+          "title": "add settings panel with global info edtable, RTL stuff, your name, etc and allow more settings later",
+          "description": "",
+          "status": "todo",
+          "priority": "medium",
+          "id": "8cccc6d1-35ad-4c30-afb6-eedc82098f20",
+          "createdAt": "2026-03-24T21:21:25.557Z"
+        },
+        {
+          "title": "let's add a db and auth, we use cf for most things so use it, also push to git, and ",
+          "description": "Consider users and their, uh, boards and their names and their settings and all the things that they use",
+          "status": "todo",
+          "priority": "medium",
+          "id": "ba3e3bee-a83e-46be-95ac-1e94e38b841a",
+          "createdAt": "2026-03-24T21:25:22.947Z"
+        },
+        {
+          "title": "I guess we need, um, after the description when it's completed, we need the, um, LLM to also add the short description of what he did",
+          "description": "",
+          "status": "todo",
+          "priority": "medium",
+          "id": "3b123a76-9af1-40ca-b0ed-488f26e7c925",
+          "createdAt": "2026-03-24T21:28:17.890Z"
+        }
+      ]
+    },
+    {
+      "id": "template",
+      "name": "Template",
+      "description": "Centralized dev environment template — idea stage",
+      "repo": "~/Documents/code/template",
+      "stack": "",
+      "status": "Idea — not yet defined",
+      "context": "Currently just a consolidated .env file with all API keys across projects. The actual project concept hasn't been discussed yet.",
+      "tasks": []
+    },
+    {
+      "id": "gushaha-lev",
+      "name": "Gushaha Lev",
+      "description": "",
+      "repo": "",
+      "stack": "",
+      "context": "",
+      "status": "New",
+      "tasks": [
+        {
+          "title": "Gusgahna lev",
+          "description": "svbzdfbasa asfgbasfb\n",
+          "status": "backlog",
+          "priority": "medium",
+          "id": "7c918fe2-8d10-47f3-ba1c-a1fcbf45b963",
+          "createdAt": "2026-03-24T20:43:18.978Z"
+        }
+      ]
+    }
+  ]
+}
