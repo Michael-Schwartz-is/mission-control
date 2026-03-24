@@ -9,6 +9,7 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { SettingsPage } from "@/components/SettingsPage";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import type { Project } from "@/types";
+import { t, setLanguage, isRtl } from "@/i18n";
 
 function ProjectMenu({ onDelete }: { onDelete: () => void }) {
   const [open, setOpen] = useState(false);
@@ -93,7 +94,21 @@ function Dashboard() {
   const [newTaskTrigger, setNewTaskTrigger] = useState(0);
   const [newProjectTrigger, setNewProjectTrigger] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const [rtl, setRtl] = useState(() => readPref("rtl", false));
+  const [lang, setLang] = useState(() => {
+    const saved = readPref("lang", "en");
+    setLanguage(saved);
+    return saved;
+  });
+  const [, forceUpdate] = useState(0);
+
+  const handleLangChange = useCallback((newLang: string) => {
+    setLang(newLang);
+    setLanguage(newLang);
+    writePref("lang", newLang);
+    forceUpdate((n) => n + 1); // re-render with new translations
+  }, []);
+
+  const rtl = isRtl();
 
   const effectiveSelectedId =
     selectedId && projects.some((p) => p.id === selectedId)
@@ -190,14 +205,14 @@ function Dashboard() {
             onGlobalChange={(data) =>
               setGlobalContext({ data: JSON.stringify(data) })
             }
-            rtl={rtl}
-            onRtlChange={(v) => { setRtl(v); writePref("rtl", v) }}
+            lang={lang}
+            onLangChange={handleLangChange}
             onClose={() => setShowSettings(false)}
           />
         ) : selected ? (
           <>
             {/* Tab bar */}
-            <div className="px-6 pt-5 pb-0 flex items-center gap-4 shrink-0 border-b">
+            <div className="px-6 pt-5 pb-0 flex items-center gap-4 shrink-0">
               <div className="flex items-center gap-4 flex-1">
                 <h2 className="text-sm font-medium text-foreground">{selected.name}</h2>
                 <div className="flex gap-0.5">
@@ -211,7 +226,7 @@ function Dashboard() {
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      {tab === "board" ? "Board" : "Details"}
+                      {t(tab)}
                       {activeTab === tab && (
                         <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
                       )}
@@ -224,13 +239,13 @@ function Dashboard() {
                   onClick={triggerNewTask}
                   className="text-xs text-primary-foreground bg-primary hover:bg-primary/80 px-2.5 py-1 rounded transition-colors mb-1.5"
                 >
-                  + Task
+                  {t('new_task')}
                 </button>
               )}
               <div className="mb-1.5">
                 <ProjectMenu
                   onDelete={async () => {
-                    if (!confirm(`Delete "${selected.name}" and all its tasks?`)) return;
+                    if (!confirm(`${t('delete_project')}: "${selected.name}"?`)) return;
                     await removeProject({ projectId: selected.id });
                     const remaining = projects.filter((p) => p.id !== selected.id);
                     handleSelectProject(remaining[0]?.id ?? "");
@@ -283,22 +298,20 @@ function Dashboard() {
             <div className="text-center space-y-4 max-w-xs">
               {projects.length === 0 ? (
                 <>
-                  <div className="text-sm font-medium text-foreground">Welcome to Mission Control</div>
-                  <div className="text-xs text-muted-foreground leading-relaxed">
-                    Create a project to get started. Each project gets its own task board with drag-and-drop columns.
-                  </div>
+                  <div className="text-sm font-medium text-foreground">{t('welcome')}</div>
+                  <div className="text-xs text-muted-foreground leading-relaxed">{t('welcome_desc')}</div>
                   <button
                     onClick={() => setNewProjectTrigger((n) => n + 1)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
                   >
-                    + New Project
+                    {t('new_project')}
                   </button>
                   <div className="text-[10px] text-muted-foreground/60">
-                    or press <kbd className="px-1 py-0.5 rounded bg-muted text-foreground font-mono">P</kbd>
+                    {t('or_press')} <kbd className="px-1 py-0.5 rounded bg-muted text-foreground font-mono">P</kbd>
                   </div>
                 </>
               ) : (
-                <div className="text-xs text-muted-foreground">Select a project from the sidebar</div>
+                <div className="text-xs text-muted-foreground">{t('select_project')}</div>
               )}
             </div>
           </div>

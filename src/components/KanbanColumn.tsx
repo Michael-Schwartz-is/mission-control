@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import type { Task } from '@/types'
+import { t } from '@/i18n'
 import { TaskCard } from './TaskCard'
 import { cn } from '@/lib/utils'
 import { PRIORITY_ORDER } from '@/types'
@@ -11,12 +13,34 @@ interface KanbanColumnProps {
   onTaskClick: (task: Task) => void
   onTaskDelete: (taskId: string) => void
   onColumnDelete?: (columnId: string) => void
+  onQuickAdd?: (title: string, status: string) => void
+  showQuickAdd?: boolean
 }
 
-export function KanbanColumn({ id, label, tasks, onTaskClick, onTaskDelete, onColumnDelete }: KanbanColumnProps) {
+export function KanbanColumn({ id, label, tasks, onTaskClick, onTaskDelete, onColumnDelete, onQuickAdd, showQuickAdd }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id })
+  const [adding, setAdding] = useState(false)
+  const [title, setTitle] = useState('')
 
   const sorted = [...tasks].sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority])
+
+  // Auto-open when showQuickAdd triggers
+  if (showQuickAdd && !adding) {
+    setAdding(true)
+    setTitle('')
+  }
+
+  const handleSubmit = () => {
+    if (!title.trim()) return
+    onQuickAdd?.(title.trim(), id)
+    setTitle('')
+    // Keep input open for rapid entry
+  }
+
+  const handleCancel = () => {
+    setAdding(false)
+    setTitle('')
+  }
 
   return (
     <div
@@ -55,6 +79,27 @@ export function KanbanColumn({ id, label, tasks, onTaskClick, onTaskDelete, onCo
             onDelete={() => onTaskDelete(task.id)}
           />
         ))}
+        {adding ? (
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSubmit()
+              if (e.key === 'Escape') handleCancel()
+            }}
+            onBlur={() => { if (!title.trim()) handleCancel() }}
+            placeholder={t('task_placeholder')}
+            autoFocus
+            className="bg-card rounded-md p-3 text-sm shadow-sm border-0 outline-none ring-1 ring-primary/30 focus:ring-primary placeholder:text-muted-foreground/50"
+          />
+        ) : onQuickAdd ? (
+          <button
+            onClick={() => setAdding(true)}
+            className="text-xs text-muted-foreground/40 hover:text-muted-foreground py-2 transition-colors"
+          >
+            {t('add_task')}
+          </button>
+        ) : null}
       </div>
     </div>
   )

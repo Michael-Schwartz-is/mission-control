@@ -5,6 +5,7 @@ import { KanbanColumn } from './KanbanColumn'
 import { TaskDialog } from './TaskDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { t } from '@/i18n'
 
 interface KanbanBoardProps {
   project: Project
@@ -81,18 +82,16 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
       <div className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4 max-w-xs">
-            <div className="text-sm font-medium text-foreground">No tasks yet</div>
-            <div className="text-xs text-muted-foreground leading-relaxed">
-              Add tasks to track your work. Drag them between columns to update status.
-            </div>
+            <div className="text-sm font-medium text-foreground">{t('no_tasks')}</div>
+            <div className="text-xs text-muted-foreground leading-relaxed">{t('no_tasks_desc')}</div>
             <button
               onClick={() => { setSelectedTask(null); setIsNew(true); setDialogOpen(true) }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
             >
-              + New Task
+              {t('new_task_btn')}
             </button>
             <div className="text-[10px] text-muted-foreground/60">
-              or press <kbd className="px-1 py-0.5 rounded bg-muted text-foreground font-mono">N</kbd>
+              {t('or_press')} <kbd className="px-1 py-0.5 rounded bg-muted text-foreground font-mono">N</kbd>
             </div>
           </div>
         </div>
@@ -122,6 +121,7 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
                 onTaskClick={openEdit}
                 onTaskDelete={onDeleteTask}
                 onColumnDelete={onDeleteColumn}
+                onQuickAdd={(title, status) => onAddTask({ title, status })}
               />
             ))}
             {/* Add column */}

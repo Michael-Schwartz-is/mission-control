@@ -3,12 +3,13 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { t } from '@/i18n'
 
 interface SettingsPageProps {
   globalContext: Record<string, string>
   onGlobalChange: (data: Record<string, string>) => void
-  rtl: boolean
-  onRtlChange: (v: boolean) => void
+  lang: string
+  onLangChange: (lang: string) => void
   onClose: () => void
 }
 
@@ -93,7 +94,7 @@ function ApiKeysSection() {
   )
 }
 
-export function SettingsPage({ globalContext, onGlobalChange, rtl, onRtlChange }: SettingsPageProps) {
+export function SettingsPage({ globalContext, onGlobalChange, lang, onLangChange }: SettingsPageProps) {
   const currentUser = useQuery(api.users.currentUser)
   const [globalForm, setGlobalForm] = useState<Record<string, string>>({ ...globalContext })
   const [saved, setSaved] = useState(false)
@@ -107,11 +108,11 @@ export function SettingsPage({ globalContext, onGlobalChange, rtl, onRtlChange }
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-8">
-        <h1 className="text-xl font-semibold text-foreground">Preferences</h1>
+        <h1 className="text-xl font-semibold text-foreground">{t('preferences')}</h1>
 
         {/* Account */}
         <div id="settings-account" className="space-y-2">
-          <SectionHeading>Account</SectionHeading>
+          <SectionHeading>{t('account')}</SectionHeading>
           <SettingsCard>
             <SettingsRow label={currentUser?.name || 'User'} description={currentUser?.email || ''}>
               {currentUser?.image ? (
@@ -127,25 +128,25 @@ export function SettingsPage({ globalContext, onGlobalChange, rtl, onRtlChange }
 
         {/* Interface */}
         <div id="settings-interface" className="space-y-2">
-          <SectionHeading>Interface</SectionHeading>
+          <SectionHeading>{t('interface')}</SectionHeading>
           <SettingsCard>
-            <SettingsRow label="RTL layout" description="Use right-to-left text direction">
-              <button
-                onClick={() => onRtlChange(!rtl)}
-                className={`w-9 h-5 rounded-full transition-colors relative ${rtl ? 'bg-primary' : 'bg-muted-foreground/20'}`}
+            <SettingsRow label={t('interface')} description="Choose your language">
+              <select
+                value={lang}
+                onChange={(e) => onLangChange(e.target.value)}
+                className="h-8 rounded-md border bg-background px-2 text-xs text-foreground"
               >
-                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${rtl ? 'left-[18px]' : 'left-0.5'}`} />
-              </button>
+                <option value="en">English</option>
+                <option value="he">עברית</option>
+              </select>
             </SettingsRow>
           </SettingsCard>
         </div>
 
         {/* Agent context */}
         <div id="settings-agent-context" className="space-y-2">
-          <SectionHeading>Agent context</SectionHeading>
-          <p className="text-xs text-muted-foreground">
-            Key-value pairs shared across all projects. Agents use this to find resources like vaults, skills folders, or API keys.
-          </p>
+          <SectionHeading>{t('agent_context')}</SectionHeading>
+          <p className="text-xs text-muted-foreground">{t('agent_context_desc')}</p>
           <SettingsCard>
             {Object.entries(globalForm).map(([key, value]) => (
               <div key={key} className="flex gap-2 items-center px-3 py-2">
@@ -196,9 +197,9 @@ export function SettingsPage({ globalContext, onGlobalChange, rtl, onRtlChange }
 
         {/* API Keys */}
         <div id="settings-api-keys" className="space-y-2">
-          <SectionHeading>API keys</SectionHeading>
+          <SectionHeading>{t('api_keys')}</SectionHeading>
           <p className="text-xs text-muted-foreground">
-            Authenticate agents via <code className="bg-muted px-1 rounded">Authorization: Bearer &lt;key&gt;</code>
+            {t('api_keys_desc')} <code className="bg-muted px-1 rounded">Authorization: Bearer &lt;key&gt;</code>
           </p>
           <ApiKeysSection />
         </div>

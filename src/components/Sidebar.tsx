@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import type { Project, GlobalContext } from '@/types'
+import { t } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
@@ -59,7 +60,7 @@ function UserDropdown({ userName, userImage, onLogout }: {
             onClick={() => { setOpen(false); onLogout() }}
             className="w-full text-left px-3 py-1.5 text-xs text-popover-foreground hover:bg-accent transition-colors"
           >
-            Sign out
+            {t('sign_out')}
           </button>
         </div>
       )}
@@ -109,16 +110,21 @@ export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDelete
         <>
           <div className="flex-1">
             <div className="p-2 space-y-0.5">
-              {['Account', 'Interface', 'Agent context', 'API keys'].map((section) => (
+              {[
+                { key: 'account', anchor: 'settings-account' },
+                { key: 'interface', anchor: 'settings-interface' },
+                { key: 'agent_context', anchor: 'settings-agent-context' },
+                { key: 'api_keys', anchor: 'settings-api-keys' },
+              ].map(({ key, anchor }) => (
                 <button
-                  key={section}
+                  key={key}
                   onClick={() => {
-                    const el = document.getElementById(`settings-${section.toLowerCase().replace(/\s/g, '-')}`)
+                    const el = document.getElementById(anchor)
                     el?.scrollIntoView({ behavior: 'smooth' })
                   }}
                   className="w-full text-left px-3 py-1.5 rounded-md text-xs text-sidebar-foreground/70 hover:bg-sidebar-accent/50 transition-colors"
                 >
-                  {section}
+                  {t(key)}
                 </button>
               ))}
             </div>
@@ -128,7 +134,7 @@ export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDelete
               onClick={() => onSelect(selectedId || projects[0]?.id || '')}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
             >
-              <span className="text-sm">←</span> Back to projects
+              <span className="text-sm">←</span> {t('back_to_projects')}
             </button>
           </div>
         </>
@@ -177,7 +183,7 @@ export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDelete
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') { setAdding(false); setNewName('') } }}
                   onBlur={() => { if (!newName.trim()) { setAdding(false); setNewName('') } }}
-                  placeholder="Project name — Enter to create"
+                  placeholder={t('new_project_placeholder')}
                   autoFocus
                   className="h-7 text-xs"
                 />
@@ -190,7 +196,7 @@ export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDelete
               onClick={onSettingsClick}
               className="w-full text-left px-3 py-1.5 rounded-md text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50 transition-colors"
             >
-              Preferences
+              {t('preferences')}
             </button>
           </div>
         </>
