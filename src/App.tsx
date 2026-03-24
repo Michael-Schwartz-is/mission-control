@@ -1,14 +1,49 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useAuth } from "@/auth";
 import { LoginPage } from "@/components/LoginPage";
 import { Sidebar } from "@/components/Sidebar";
-import { ProjectContext } from "@/components/ProjectContext";
+import { ProjectDetails } from "@/components/ProjectDetails";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { SettingsPage } from "@/components/SettingsPage";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import type { Project } from "@/types";
+
+function ProjectMenu({ onDelete }: { onDelete: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="text-xs text-muted-foreground hover:text-foreground px-1.5 py-1 rounded hover:bg-muted transition-colors"
+      >
+        ...
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 bg-popover border rounded-md shadow-md z-50 py-1 min-w-[120px]">
+          <button
+            onClick={() => { setOpen(false); onDelete(); }}
+            className="w-full text-left px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            Delete project
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function readPref<T>(key: string, fallback: T): T {
   try {
@@ -43,16 +78,14 @@ function Dashboard() {
   const removeTask = useMutation(api.tasks.remove);
   const moveTask = useMutation(api.tasks.move);
   const addColumn = useMutation(api.columns.add);
+  const removeColumn = useMutation(api.columns.remove);
   const setGlobalContext = useMutation(api.globalContext.set);
 
   const [selectedId, setSelectedId] = useState<string | null>(() =>
     readPref("selectedId", null)
   );
-  const [showContext, setShowContext] = useState(() =>
-    readPref("showContext", true)
-  );
-  const [showBoard, setShowBoard] = useState(() =>
-    readPref("showBoard", true)
+  const [activeTab, setActiveTab] = useState<"board" | "details">(() =>
+    readPref("activeTab", "board")
   );
   const [showSidebar, setShowSidebar] = useState(() =>
     readPref("showSidebar", true)
@@ -72,18 +105,9 @@ function Dashboard() {
     writePref("selectedId", id);
   }, []);
 
-  const toggleContext = useCallback(() => {
-    setShowContext((v) => {
-      writePref("showContext", !v);
-      return !v;
-    });
-  }, []);
-
-  const toggleBoard = useCallback(() => {
-    setShowBoard((v) => {
-      writePref("showBoard", !v);
-      return !v;
-    });
+  const switchTab = useCallback((tab: "board" | "details") => {
+    setActiveTab(tab);
+    writePref("activeTab", tab);
   }, []);
 
   const toggleSidebar = useCallback(() => {
@@ -94,16 +118,15 @@ function Dashboard() {
   }, []);
 
   const triggerNewTask = useCallback(() => {
-    setShowBoard(true);
-    writePref("showBoard", true);
+    switchTab("board");
     setNewTaskTrigger((n) => n + 1);
-  }, []);
+  }, [switchTab]);
 
   useKeyboardShortcuts({
     n: triggerNewTask,
     p: () => setNewProjectTrigger((n) => n + 1),
-    b: toggleBoard,
-    d: toggleContext,
+    b: () => switchTab("board"),
+    d: () => switchTab("details"),
     s: toggleSidebar,
     ",": () => setShowSettings((v) => !v),
   });
@@ -142,6 +165,7 @@ function Dashboard() {
           onSettingsClick={() => setShowSettings(true)}
           onLogout={() => void signOut()}
           newProjectTrigger={newProjectTrigger}
+          inSettings={showSettings}
         />
       </div>
       <button
@@ -172,31 +196,50 @@ function Dashboard() {
           />
         ) : selected ? (
           <>
-            <div className="px-6 pt-6 pb-2 flex items-center gap-2 shrink-0">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex-1">
-                {selected.name}
-              </h2>
-              <button
-                onClick={toggleContext}
-                className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition-colors"
-              >
-                {showContext ? "Hide Details" : "Show Details"}
-              </button>
-              <button
-                onClick={toggleBoard}
-                className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition-colors"
-              >
-                {showBoard ? "Hide Board" : "Show Board"}
-              </button>
-              <button
-                onClick={triggerNewTask}
-                className="text-xs text-primary-foreground bg-primary hover:bg-primary/80 px-2 py-1 rounded transition-colors"
-              >
-                + Task
-              </button>
+            {/* Tab bar */}
+            <div className="px-6 pt-5 pb-0 flex items-center gap-4 shrink-0 border-b">
+              <div className="flex items-center gap-4 flex-1">
+                <h2 className="text-sm font-medium text-foreground">{selected.name}</h2>
+                <div className="flex gap-0.5">
+                  {(["board", "details"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => switchTab(tab)}
+                      className={`text-xs px-3 py-1.5 rounded-t-md transition-colors relative ${
+                        activeTab === tab
+                          ? "text-foreground font-medium"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {tab === "board" ? "Board" : "Details"}
+                      {activeTab === tab && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {activeTab === "board" && (
+                <button
+                  onClick={triggerNewTask}
+                  className="text-xs text-primary-foreground bg-primary hover:bg-primary/80 px-2.5 py-1 rounded transition-colors mb-1.5"
+                >
+                  + Task
+                </button>
+              )}
+              <div className="mb-1.5">
+                <ProjectMenu
+                  onDelete={async () => {
+                    if (!confirm(`Delete "${selected.name}" and all its tasks?`)) return;
+                    await removeProject({ projectId: selected.id });
+                    const remaining = projects.filter((p) => p.id !== selected.id);
+                    handleSelectProject(remaining[0]?.id ?? "");
+                  }}
+                />
+              </div>
             </div>
-            {showContext && (
-              <ProjectContext
+            {activeTab === "details" ? (
+              <ProjectDetails
                 project={selected as Project}
                 onSave={(updates) =>
                   updateProject({
@@ -205,8 +248,7 @@ function Dashboard() {
                   })
                 }
               />
-            )}
-            {showBoard && (
+            ) : (
               <KanbanBoard
                 project={selected as Project}
                 columns={columns}
@@ -231,6 +273,7 @@ function Dashboard() {
                   removeTask({ projectId: selected.id, taskId })
                 }
                 onAddColumn={(label) => addColumn({ label })}
+                onDeleteColumn={(columnId) => removeColumn({ columnId })}
                 newTaskTrigger={newTaskTrigger}
               />
             )}

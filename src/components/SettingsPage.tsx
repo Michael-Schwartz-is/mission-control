@@ -93,7 +93,7 @@ function ApiKeysSection() {
   )
 }
 
-export function SettingsPage({ globalContext, onGlobalChange, rtl, onRtlChange, onClose }: SettingsPageProps) {
+export function SettingsPage({ globalContext, onGlobalChange, rtl, onRtlChange }: SettingsPageProps) {
   const currentUser = useQuery(api.users.currentUser)
   const [globalForm, setGlobalForm] = useState<Record<string, string>>({ ...globalContext })
   const [saved, setSaved] = useState(false)
@@ -107,18 +107,10 @@ export function SettingsPage({ globalContext, onGlobalChange, rtl, onRtlChange, 
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-foreground">Preferences</h1>
-          <button
-            onClick={onClose}
-            className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition-colors"
-          >
-            Back to board
-          </button>
-        </div>
+        <h1 className="text-xl font-semibold text-foreground">Preferences</h1>
 
         {/* Account */}
-        <div className="space-y-2">
+        <div id="settings-account" className="space-y-2">
           <SectionHeading>Account</SectionHeading>
           <SettingsCard>
             <SettingsRow label={currentUser?.name || 'User'} description={currentUser?.email || ''}>
@@ -134,7 +126,7 @@ export function SettingsPage({ globalContext, onGlobalChange, rtl, onRtlChange, 
         </div>
 
         {/* Interface */}
-        <div className="space-y-2">
+        <div id="settings-interface" className="space-y-2">
           <SectionHeading>Interface</SectionHeading>
           <SettingsCard>
             <SettingsRow label="RTL layout" description="Use right-to-left text direction">
@@ -149,7 +141,7 @@ export function SettingsPage({ globalContext, onGlobalChange, rtl, onRtlChange, 
         </div>
 
         {/* Agent context */}
-        <div className="space-y-2">
+        <div id="settings-agent-context" className="space-y-2">
           <SectionHeading>Agent context</SectionHeading>
           <p className="text-xs text-muted-foreground">
             Key-value pairs shared across all projects. Agents use this to find resources like vaults, skills folders, or API keys.
@@ -203,7 +195,7 @@ export function SettingsPage({ globalContext, onGlobalChange, rtl, onRtlChange, 
         </div>
 
         {/* API Keys */}
-        <div className="space-y-2">
+        <div id="settings-api-keys" className="space-y-2">
           <SectionHeading>API keys</SectionHeading>
           <p className="text-xs text-muted-foreground">
             Authenticate agents via <code className="bg-muted px-1 rounded">Authorization: Bearer &lt;key&gt;</code>

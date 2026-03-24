@@ -14,10 +14,11 @@ interface KanbanBoardProps {
   onUpdateTask: (taskId: string, updates: { title?: string; description?: string; status?: string; priority?: string }) => void
   onDeleteTask: (taskId: string) => void
   onAddColumn: (label: string) => void
+  onDeleteColumn: (columnId: string) => void
   newTaskTrigger?: number
 }
 
-export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateTask, onDeleteTask, onAddColumn, newTaskTrigger }: KanbanBoardProps) {
+export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateTask, onDeleteTask, onAddColumn, onDeleteColumn, newTaskTrigger }: KanbanBoardProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isNew, setIsNew] = useState(false)
@@ -120,6 +121,7 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
                 tasks={tasksByStatus(col.id)}
                 onTaskClick={openEdit}
                 onTaskDelete={onDeleteTask}
+                onColumnDelete={onDeleteColumn}
               />
             ))}
             {/* Add column */}

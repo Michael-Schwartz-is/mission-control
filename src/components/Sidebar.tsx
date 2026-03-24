@@ -17,6 +17,7 @@ interface SidebarProps {
   onSettingsClick: () => void
   onLogout?: () => void
   newProjectTrigger?: number
+  inSettings?: boolean
 }
 
 function UserDropdown({ userName, userImage, onLogout }: {
@@ -66,7 +67,7 @@ function UserDropdown({ userName, userImage, onLogout }: {
   )
 }
 
-export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDeleteProject, userName, userImage, onSettingsClick, onLogout, newProjectTrigger }: SidebarProps) {
+export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDeleteProject, userName, userImage, onSettingsClick, onLogout, newProjectTrigger, inSettings }: SidebarProps) {
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
   const [lastTrigger, setLastTrigger] = useState(0)
@@ -94,73 +95,106 @@ export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDelete
             onLogout={onLogout}
           />
         </div>
-        <button
-          onClick={() => setAdding(true)}
-          className="text-sidebar-foreground/40 hover:text-sidebar-foreground text-sm transition-colors px-2 py-2 shrink-0"
-          title="New project"
-        >
-          +
-        </button>
-      </div>
-      <ScrollArea className="flex-1">
-        <div className="p-2 space-y-0.5">
-          {projects.map((project) => {
-            const taskCount = project.tasks.filter((t) => t.status !== 'done').length
-            return (
-              <div key={project.id} className="group relative">
-                <button
-                  onClick={() => onSelect(project.id)}
-                  className={cn(
-                    'w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors flex items-center justify-between',
-                    selectedId === project.id
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50'
-                  )}
-                >
-                  <span className="truncate">{project.name}</span>
-                  {taskCount > 0 && (
-                    <Badge variant="secondary" className="ml-2 text-xs h-5 min-w-5 justify-center">
-                      {taskCount}
-                    </Badge>
-                  )}
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (confirm(`Delete "${project.name}"?`)) onDeleteProject(project.id)
-                  }}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center text-sidebar-foreground/0 group-hover:text-sidebar-foreground/30 hover:!text-destructive transition-colors text-[10px]"
-                >
-                  x
-                </button>
-              </div>
-            )
-          })}
-        </div>
-
-        {adding && (
-          <div className="px-2 pb-2">
-            <Input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') { setAdding(false); setNewName('') } }}
-              onBlur={() => { if (!newName.trim()) { setAdding(false); setNewName('') } }}
-              placeholder="Project name — Enter to create"
-              autoFocus
-              className="h-7 text-xs"
-            />
-          </div>
+        {!inSettings && (
+          <button
+            onClick={() => setAdding(true)}
+            className="text-sidebar-foreground/40 hover:text-sidebar-foreground text-sm transition-colors px-2 py-2 shrink-0"
+            title="New project"
+          >
+            +
+          </button>
         )}
-
-      </ScrollArea>
-      <div className="p-2">
-        <button
-          onClick={onSettingsClick}
-          className="w-full text-left px-3 py-1.5 rounded-md text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50 transition-colors"
-        >
-          Preferences
-        </button>
       </div>
+      {inSettings ? (
+        <>
+          <div className="flex-1">
+            <div className="p-2 space-y-0.5">
+              {['Account', 'Interface', 'Agent context', 'API keys'].map((section) => (
+                <button
+                  key={section}
+                  onClick={() => {
+                    const el = document.getElementById(`settings-${section.toLowerCase().replace(/\s/g, '-')}`)
+                    el?.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  className="w-full text-left px-3 py-1.5 rounded-md text-xs text-sidebar-foreground/70 hover:bg-sidebar-accent/50 transition-colors"
+                >
+                  {section}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="p-2">
+            <button
+              onClick={() => onSelect(selectedId || projects[0]?.id || '')}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+            >
+              <span className="text-sm">←</span> Back to projects
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <ScrollArea className="flex-1">
+            <div className="p-2 space-y-0.5">
+              {projects.map((project) => {
+                const taskCount = project.tasks.filter((t) => t.status !== 'done').length
+                return (
+                  <div key={project.id} className="group relative">
+                    <button
+                      onClick={() => onSelect(project.id)}
+                      className={cn(
+                        'w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors flex items-center justify-between',
+                        selectedId === project.id
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50'
+                      )}
+                    >
+                      <span className="truncate">{project.name}</span>
+                      {taskCount > 0 && (
+                        <Badge variant="secondary" className="ml-2 text-xs h-5 min-w-5 justify-center">
+                          {taskCount}
+                        </Badge>
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (confirm(`Delete "${project.name}"?`)) onDeleteProject(project.id)
+                      }}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center text-sidebar-foreground/0 group-hover:text-sidebar-foreground/30 hover:!text-destructive transition-colors text-[10px]"
+                    >
+                      x
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+
+            {adding && (
+              <div className="px-2 pb-2">
+                <Input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') { setAdding(false); setNewName('') } }}
+                  onBlur={() => { if (!newName.trim()) { setAdding(false); setNewName('') } }}
+                  placeholder="Project name — Enter to create"
+                  autoFocus
+                  className="h-7 text-xs"
+                />
+              </div>
+            )}
+
+          </ScrollArea>
+          <div className="p-2">
+            <button
+              onClick={onSettingsClick}
+              className="w-full text-left px-3 py-1.5 rounded-md text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50 transition-colors"
+            >
+              Preferences
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

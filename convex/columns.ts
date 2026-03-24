@@ -44,3 +44,17 @@ export const add = mutation({
     });
   },
 });
+
+export const remove = mutation({
+  args: { columnId: v.string() },
+  handler: async (ctx, { columnId }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const cols = await ctx.db
+      .query("columns")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    const col = cols.find((c) => c.columnId === columnId);
+    if (col) await ctx.db.delete(col._id);
+  },
+});
