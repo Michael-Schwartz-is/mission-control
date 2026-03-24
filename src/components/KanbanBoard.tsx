@@ -111,7 +111,7 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
     <div className="flex-1 flex flex-col min-h-0">
       <div className="flex-1 pt-4 pl-4 pb-6 pr-6 overflow-x-auto">
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div className="flex gap-2 h-full w-max">
+          <div className="flex gap-2 min-h-full w-max items-start">
             {columns.map((col) => (
               <KanbanColumn
                 key={col.id}

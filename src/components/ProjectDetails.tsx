@@ -3,6 +3,7 @@ import type { Project } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { t } from '@/i18n'
 
 interface ProjectDetailsProps {
   project: Project
@@ -54,6 +55,7 @@ export function ProjectDetails({ project, onSave }: ProjectDetailsProps) {
 
   const taskCount = project.tasks.length
   const openTasks = project.tasks.filter((t) => t.status !== 'done').length
+  const isEmpty = !project.description && !project.repo && !project.stack && !project.context
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -71,6 +73,20 @@ export function ProjectDetails({ project, onSave }: ProjectDetailsProps) {
             </div>
           )}
         </div>
+
+        {/* Empty state guide */}
+        {isEmpty && !editing && (
+          <div className="rounded-lg border border-dashed p-5 space-y-3">
+            <div className="text-sm font-medium text-foreground">{t('details_empty_title')}</div>
+            <div className="text-xs text-muted-foreground leading-relaxed">{t('details_empty_desc')}</div>
+            <button
+              onClick={startEdit}
+              className="text-xs px-3 py-1.5 rounded-md bg-muted text-foreground hover:bg-muted-foreground/20 transition-colors"
+            >
+              {t('edit_details')}
+            </button>
+          </div>
+        )}
 
         {/* Properties row */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">

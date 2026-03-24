@@ -16,6 +16,7 @@ interface SidebarProps {
   userName: string
   userImage?: string | null
   onSettingsClick: () => void
+  onAdminClick?: () => void
   onLogout?: () => void
   newProjectTrigger?: number
   inSettings?: boolean
@@ -68,7 +69,7 @@ function UserDropdown({ userName, userImage, onLogout }: {
   )
 }
 
-export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDeleteProject, userName, userImage, onSettingsClick, onLogout, newProjectTrigger, inSettings }: SidebarProps) {
+export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDeleteProject, userName, userImage, onSettingsClick, onAdminClick, onLogout, newProjectTrigger, inSettings }: SidebarProps) {
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
   const [lastTrigger, setLastTrigger] = useState(0)
@@ -191,7 +192,15 @@ export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDelete
             )}
 
           </ScrollArea>
-          <div className="p-2">
+          <div className="p-2 space-y-0.5">
+            {onAdminClick && (
+              <button
+                onClick={onAdminClick}
+                className="w-full text-left px-3 py-1.5 rounded-md text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50 transition-colors"
+              >
+                Analytics
+              </button>
+            )}
             <button
               onClick={onSettingsClick}
               className="w-full text-left px-3 py-1.5 rounded-md text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50 transition-colors"

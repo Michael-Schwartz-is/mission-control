@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { ProjectDetails } from "@/components/ProjectDetails";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { SettingsPage } from "@/components/SettingsPage";
+import { AdminPage } from "@/components/AdminPage";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import type { Project } from "@/types";
 import { t, setLanguage, isRtl } from "@/i18n";
@@ -94,6 +95,7 @@ function Dashboard() {
   const [newTaskTrigger, setNewTaskTrigger] = useState(0);
   const [newProjectTrigger, setNewProjectTrigger] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [lang, setLang] = useState(() => {
     const saved = readPref("lang", "en");
     setLanguage(saved);
@@ -161,6 +163,7 @@ function Dashboard() {
           selectedId={effectiveSelectedId}
           onSelect={(id) => {
             setShowSettings(false);
+            setShowAdmin(false);
             handleSelectProject(id);
           }}
           onAddProject={async (name) => {
@@ -177,7 +180,8 @@ function Dashboard() {
           }}
           userName={userName}
           userImage={userImage}
-          onSettingsClick={() => setShowSettings(true)}
+          onSettingsClick={() => { setShowSettings(true); setShowAdmin(false) }}
+          onAdminClick={() => { setShowAdmin(true); setShowSettings(false) }}
           onLogout={() => void signOut()}
           newProjectTrigger={newProjectTrigger}
           inSettings={showSettings}
@@ -199,7 +203,9 @@ function Dashboard() {
         </span>
       </button>
       <div className="flex-1 min-w-0 flex flex-col min-h-0 bg-background">
-        {showSettings ? (
+        {showAdmin ? (
+          <AdminPage />
+        ) : showSettings ? (
           <SettingsPage
             globalContext={globalContext}
             onGlobalChange={(data) =>
@@ -237,7 +243,7 @@ function Dashboard() {
               {activeTab === "board" && (
                 <button
                   onClick={triggerNewTask}
-                  className="text-xs text-primary-foreground bg-primary hover:bg-primary/80 px-2.5 py-1 rounded transition-colors mb-1.5"
+                  className="text-xs text-foreground bg-muted hover:bg-muted-foreground/20 px-2.5 py-1 rounded transition-colors mb-1.5"
                 >
                   {t('new_task')}
                 </button>

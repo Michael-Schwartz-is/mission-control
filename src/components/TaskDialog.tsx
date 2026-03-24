@@ -36,6 +36,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns }: Omit<Task
         <Input
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
+          onKeyDown={(e) => { if (e.key === 'Enter' && form.title.trim()) handleSave() }}
           placeholder="Task title"
           autoFocus
         />
