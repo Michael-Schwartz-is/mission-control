@@ -14,10 +14,11 @@ interface KanbanColumnProps {
   onTaskDelete: (taskId: string) => void
   onColumnDelete?: (columnId: string) => void
   onQuickAdd?: (title: string, status: string) => void
+  onAddTaskClick?: (status: string) => void
   showQuickAdd?: boolean
 }
 
-export function KanbanColumn({ id, label, tasks, onTaskClick, onTaskDelete, onColumnDelete, onQuickAdd, showQuickAdd }: KanbanColumnProps) {
+export function KanbanColumn({ id, label, tasks, onTaskClick, onTaskDelete, onColumnDelete, onQuickAdd, onAddTaskClick, showQuickAdd }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id })
   const [adding, setAdding] = useState(false)
   const [title, setTitle] = useState('')
@@ -92,9 +93,9 @@ export function KanbanColumn({ id, label, tasks, onTaskClick, onTaskDelete, onCo
             autoFocus
             className="bg-card rounded-md p-3 text-sm shadow-sm border-0 outline-none ring-1 ring-primary/30 focus:ring-primary placeholder:text-muted-foreground/50"
           />
-        ) : onQuickAdd ? (
+        ) : (onQuickAdd || onAddTaskClick) ? (
           <button
-            onClick={() => setAdding(true)}
+            onClick={() => onAddTaskClick ? onAddTaskClick(id) : setAdding(true)}
             className="text-xs text-muted-foreground/40 hover:text-muted-foreground py-2 transition-colors"
           >
             {t('add_task')}

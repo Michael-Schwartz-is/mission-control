@@ -23,6 +23,7 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isNew, setIsNew] = useState(false)
+  const [defaultStatus, setDefaultStatus] = useState('todo')
   const [lastTrigger, setLastTrigger] = useState(0)
 
   if (newTaskTrigger && newTaskTrigger !== lastTrigger) {
@@ -102,6 +103,7 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
           onClose={() => setDialogOpen(false)}
           onSave={handleSave}
           columns={columns}
+          defaultStatus={defaultStatus}
         />
       </div>
     )
@@ -122,6 +124,12 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
                 onTaskDelete={onDeleteTask}
                 onColumnDelete={onDeleteColumn}
                 onQuickAdd={(title, status) => onAddTask({ title, status })}
+                onAddTaskClick={(status) => {
+                  setSelectedTask(null)
+                  setIsNew(true)
+                  setDefaultStatus(status)
+                  setDialogOpen(true)
+                }}
               />
             ))}
             {/* Add column */}
@@ -159,6 +167,7 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
         onSave={handleSave}
         onDelete={selectedTask ? () => onDeleteTask(selectedTask.id) : undefined}
         columns={columns}
+        defaultStatus={defaultStatus}
       />
     </div>
   )

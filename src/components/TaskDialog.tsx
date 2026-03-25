@@ -13,13 +13,14 @@ interface TaskDialogProps {
   onSave: (task: Partial<Task> & { title: string }) => void
   onDelete?: () => void
   columns: Column[]
+  defaultStatus?: string
 }
 
-function TaskForm({ task, isNew, onSave, onClose, onDelete, columns }: Omit<TaskDialogProps, 'open'>) {
+function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStatus }: Omit<TaskDialogProps, 'open'>) {
   const [form, setForm] = useState({
     title: task?.title ?? '',
     description: task?.description ?? '',
-    status: task?.status ?? 'todo',
+    status: task?.status ?? defaultStatus ?? 'todo',
     priority: task?.priority ?? 'medium' as Task['priority'],
   })
 
@@ -94,7 +95,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns }: Omit<Task
   )
 }
 
-export function TaskDialog({ task, isNew, open, onClose, onSave, onDelete, columns }: TaskDialogProps) {
+export function TaskDialog({ task, isNew, open, onClose, onSave, onDelete, columns, defaultStatus }: TaskDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-lg">
@@ -103,13 +104,14 @@ export function TaskDialog({ task, isNew, open, onClose, onSave, onDelete, colum
         </DialogHeader>
         {open && (
           <TaskForm
-            key={task?.id ?? 'new'}
+            key={task?.id ?? `new-${defaultStatus}`}
             task={task}
             isNew={isNew}
             onSave={onSave}
             onClose={onClose}
             onDelete={onDelete}
             columns={columns}
+            defaultStatus={defaultStatus}
           />
         )}
       </DialogContent>
