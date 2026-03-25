@@ -92,7 +92,7 @@ function Dashboard() {
     readPref("activeTab", "board")
   );
   const [showSidebar, setShowSidebar] = useState(() =>
-    readPref("showSidebar", true)
+    readPref("showSidebar", window.innerWidth > 640)
   );
   const [newTaskTrigger, setNewTaskTrigger] = useState(0);
   const [newProjectTrigger, setNewProjectTrigger] = useState(0);
@@ -219,47 +219,42 @@ function Dashboard() {
           />
         ) : selected ? (
           <>
+            {/* Project name */}
+            <div className="px-4 sm:px-6 pt-4 pb-1 shrink-0">
+              <h2 className="text-sm font-medium text-foreground">{selected.name}</h2>
+            </div>
             {/* Tab bar */}
-            <div className="px-6 pt-5 pb-0 flex items-center gap-4 shrink-0">
-              <div className="flex items-center gap-4 flex-1">
-                <h2 className="text-sm font-medium text-foreground">{selected.name}</h2>
-                <div className="flex gap-0.5">
-                  {(["board", "details"] as const).map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => switchTab(tab)}
-                      className={`text-xs px-3 py-1.5 rounded-t-md transition-colors relative ${
-                        activeTab === tab
-                          ? "text-foreground font-medium"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {t(tab)}
-                      {activeTab === tab && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <div className="px-4 sm:px-6 pb-0 flex items-center gap-1 shrink-0">
+              {(["board", "details"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => switchTab(tab)}
+                  className={`text-xs px-2.5 py-1.5 rounded transition-colors ${
+                    activeTab === tab
+                      ? "text-foreground bg-muted font-medium"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t(tab)}
+                </button>
+              ))}
               {activeTab === "board" && (
                 <button
                   onClick={triggerNewTask}
-                  className="text-xs text-foreground bg-muted hover:bg-muted-foreground/20 px-2.5 py-1 rounded transition-colors mb-1.5"
+                  className="text-xs text-foreground bg-muted hover:bg-muted-foreground/20 px-2.5 py-1.5 rounded transition-colors"
                 >
                   {t('new_task')}
                 </button>
               )}
-              <div className="mb-1.5">
-                <ProjectMenu
-                  onDelete={async () => {
-                    if (!confirm(`${t('delete_project')}: "${selected.name}"?`)) return;
-                    await removeProject({ projectId: selected.id });
-                    const remaining = projects.filter((p) => p.id !== selected.id);
-                    handleSelectProject(remaining[0]?.id ?? "");
-                  }}
-                />
-              </div>
+              <div className="flex-1" />
+              <ProjectMenu
+                onDelete={async () => {
+                  if (!confirm(`${t('delete_project')}: "${selected.name}"?`)) return;
+                  await removeProject({ projectId: selected.id });
+                  const remaining = projects.filter((p) => p.id !== selected.id);
+                  handleSelectProject(remaining[0]?.id ?? "");
+                }}
+              />
             </div>
             {activeTab === "details" ? (
               <ProjectDetails
