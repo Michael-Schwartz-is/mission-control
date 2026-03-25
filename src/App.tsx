@@ -219,12 +219,11 @@ function Dashboard() {
           />
         ) : selected ? (
           <>
-            {/* Project name */}
-            <div className="px-4 sm:px-6 pt-4 pb-1 shrink-0">
+            {/* Mobile: name on own line, tabs + actions below */}
+            <div className="sm:hidden px-4 pt-4 pb-1 shrink-0">
               <h2 className="text-sm font-medium text-foreground">{selected.name}</h2>
             </div>
-            {/* Tab bar */}
-            <div className="px-4 sm:px-6 pb-0 flex items-center gap-1 shrink-0">
+            <div className="sm:hidden px-4 pb-0 flex items-center gap-1 shrink-0">
               {(["board", "details"] as const).map((tab) => (
                 <button
                   key={tab}
@@ -247,6 +246,46 @@ function Dashboard() {
                 </button>
               )}
               <div className="flex-1" />
+              <ProjectMenu
+                onDelete={async () => {
+                  if (!confirm(`${t('delete_project')}: "${selected.name}"?`)) return;
+                  await removeProject({ projectId: selected.id });
+                  const remaining = projects.filter((p) => p.id !== selected.id);
+                  handleSelectProject(remaining[0]?.id ?? "");
+                }}
+              />
+            </div>
+            {/* Desktop: original layout */}
+            <div className="hidden sm:flex px-6 pt-5 pb-0 items-center gap-4 shrink-0">
+              <div className="flex items-center gap-4 flex-1">
+                <h2 className="text-sm font-medium text-foreground">{selected.name}</h2>
+                <div className="flex gap-0.5">
+                  {(["board", "details"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => switchTab(tab)}
+                      className={`text-xs px-3 py-1.5 rounded-t-md transition-colors relative ${
+                        activeTab === tab
+                          ? "text-foreground font-medium"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {t(tab)}
+                      {activeTab === tab && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {activeTab === "board" && (
+                <button
+                  onClick={triggerNewTask}
+                  className="text-xs text-foreground bg-muted hover:bg-muted-foreground/20 px-2.5 py-1 rounded transition-colors"
+                >
+                  {t('new_task')}
+                </button>
+              )}
               <ProjectMenu
                 onDelete={async () => {
                   if (!confirm(`${t('delete_project')}: "${selected.name}"?`)) return;
