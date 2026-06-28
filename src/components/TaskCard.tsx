@@ -15,6 +15,12 @@ function formatShortDate(value: string) {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
+function actorLabel(task: Task) {
+  const name = task.createdByName || task.createdByEmail
+  if (task.createdVia === 'api' || name?.toLowerCase().startsWith('api key:')) return 'Agent'
+  return name || 'Legacy'
+}
+
 interface TaskCardProps {
   task: Task
   onClick: () => void
@@ -60,18 +66,8 @@ export function TaskCard({ task, onClick, onDelete }: TaskCardProps) {
       )}
       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
         <span>{formatShortDate(task.createdAt)}</span>
-        {task.createdVia && (
-          <>
-            <span>·</span>
-            <span>{task.createdVia}</span>
-          </>
-        )}
-        {task.sourceRefIds?.length ? (
-          <>
-            <span>·</span>
-            <span>{task.sourceRefIds.length} source{task.sourceRefIds.length === 1 ? '' : 's'}</span>
-          </>
-        ) : null}
+        <span>·</span>
+        <span className="truncate">{actorLabel(task)}</span>
       </div>
     </div>
   )

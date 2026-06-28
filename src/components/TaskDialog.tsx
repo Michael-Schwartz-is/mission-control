@@ -31,7 +31,16 @@ function formatDateTime(value?: string) {
   })
 }
 
+function actorLabel(task?: Task | null, event?: { actorName?: string; actorEmail?: string; createdVia?: string }) {
+  const name = task ? task.createdByName || task.createdByEmail : event?.actorName || event?.actorEmail
+  if (event?.createdVia === 'api' || task?.createdVia === 'api' || name?.toLowerCase().startsWith('api key:')) {
+    return 'Agent'
+  }
+  return name || 'Legacy'
+}
+
 function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStatus, projectId }: Omit<TaskDialogProps, 'open'>) {
+  const [activeTab, setActiveTab] = useState<'info' | 'activity'>('info')
   const [form, setForm] = useState({
     title: task?.title ?? '',
     description: task?.description ?? '',
@@ -51,102 +60,110 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
 
   return (
     <div className="space-y-3">
-      <div className="space-y-1">
-        <label className="text-xs text-muted-foreground font-medium">Title</label>
-        <Input
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          onKeyDown={(e) => { if (e.key === 'Enter' && form.title.trim()) handleSave() }}
-          placeholder="Task title"
-          autoFocus
-        />
-      </div>
-      <div className="space-y-1">
-        <label className="text-xs text-muted-foreground font-medium">Description</label>
-        <Textarea
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          placeholder="Details..."
-          rows={3}
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground font-medium">Status</label>
-          <select
-            value={form.status}
-            onChange={(e) => setForm({ ...form, status: e.target.value })}
-            className="w-full h-9 rounded-md border bg-background px-3 text-sm text-foreground"
+      {!isNew && (
+        <div className="inline-flex rounded-md bg-muted p-0.5 text-xs">
+          <button
+            type="button"
+            onClick={() => setActiveTab('info')}
+            className={`px-2.5 py-1 rounded-sm transition-colors ${activeTab === 'info' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
           >
-            {columns.map((col) => (
-              <option key={col.id} value={col.id}>{col.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground font-medium">Priority</label>
-          <select
-            value={form.priority}
-            onChange={(e) => setForm({ ...form, priority: e.target.value as Task['priority'] })}
-            className="w-full h-9 rounded-md border bg-background px-3 text-sm text-foreground"
+            Task Information
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('activity')}
+            className={`px-2.5 py-1 rounded-sm transition-colors ${activeTab === 'activity' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
           >
-            <option value="urgent">Urgent</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-        </div>
-      </div>
-      {!isNew && task && (
-        <div className="rounded-md border bg-muted/20 p-3 space-y-3">
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <div className="text-muted-foreground">Created</div>
-              <div className="text-foreground">{formatDateTime(task.createdAt)}</div>
-            </div>
-            <div>
-              <div className="text-muted-foreground">By</div>
-              <div className="text-foreground truncate">{task.createdByName || task.createdByEmail || 'Legacy'}</div>
-            </div>
-            {task.updatedAt && (
-              <div>
-                <div className="text-muted-foreground">Updated</div>
-                <div className="text-foreground">{formatDateTime(task.updatedAt)}</div>
-              </div>
-            )}
-            <div>
-              <div className="text-muted-foreground">Source</div>
-              <div className="text-foreground">{task.createdVia || 'legacy'}</div>
-            </div>
-          </div>
-          {events.length > 0 && (
-            <div className="space-y-1.5">
-              <div className="text-xs font-medium text-muted-foreground">Activity</div>
-              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                {events.map((event) => (
-                  <div key={event._id} className="text-xs leading-relaxed">
-                    <span className="text-foreground">{event.summary}</span>
-                    <span className="text-muted-foreground"> · {event.actorName || event.actorEmail || event.createdVia} · {formatDateTime(event.createdAt)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            Activity
+          </button>
         </div>
       )}
-      <div className="flex justify-between pt-2">
-        <div>
-          {!isNew && onDelete && (
-            <Button variant="destructive" size="sm" onClick={() => { onDelete(); onClose() }}>
-              Delete
-            </Button>
+      {activeTab === 'info' ? (
+        <>
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground font-medium">Title</label>
+            <Input
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              onKeyDown={(e) => { if (e.key === 'Enter' && form.title.trim()) handleSave() }}
+              placeholder="Task title"
+              autoFocus
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground font-medium">Description</label>
+            <Textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Details..."
+              rows={3}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Status</label>
+              <select
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+                className="w-full h-9 rounded-md border bg-background px-3 text-sm text-foreground"
+              >
+                {columns.map((col) => (
+                  <option key={col.id} value={col.id}>{col.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground font-medium">Priority</label>
+              <select
+                value={form.priority}
+                onChange={(e) => setForm({ ...form, priority: e.target.value as Task['priority'] })}
+                className="w-full h-9 rounded-md border bg-background px-3 text-sm text-foreground"
+              >
+                <option value="urgent">Urgent</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+          </div>
+          {!isNew && task && (
+            <div className="text-xs text-muted-foreground">
+              Created {formatDateTime(task.createdAt)} by <span className="text-foreground">{actorLabel(task)}</span>
+            </div>
           )}
+          <div className="flex justify-between pt-2">
+            <div>
+              {!isNew && onDelete && (
+                <Button variant="destructive" size="sm" onClick={() => { onDelete(); onClose() }}>
+                  Delete
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+              <Button size="sm" onClick={handleSave}>{isNew ? 'Create' : 'Save'}</Button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="space-y-3">
+          <div className="rounded-md border divide-y max-h-72 overflow-y-auto">
+            {events.length > 0 ? events.map((event) => (
+              <div key={event._id} className="p-3 text-xs leading-relaxed">
+                <div className="text-foreground">{event.summary}</div>
+                <div className="text-muted-foreground mt-0.5">
+                  {actorLabel(null, event)} · {formatDateTime(event.createdAt)}
+                </div>
+              </div>
+            )) : (
+              <div className="p-3 text-xs text-muted-foreground">No activity yet</div>
+            )}
+          </div>
+          <div className="flex justify-end pt-2">
+            <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={handleSave}>{isNew ? 'Create' : 'Save'}</Button>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
