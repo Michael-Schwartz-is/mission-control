@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import type { Task, Column } from '@/types'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -84,13 +84,13 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
   return (
     <div className="space-y-3">
       {!isNew && (
-        <div className="inline-flex rounded-md bg-muted p-0.5 text-xs">
+        <div className="inline-flex rounded-sm bg-muted p-0.5 text-xs">
           <button
             type="button"
             onClick={() => setActiveTab('info')}
             className={`px-2.5 py-1 rounded-sm transition-colors ${activeTab === 'info' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
           >
-            Task Information
+            Edit Task
           </button>
           <button
             type="button"
@@ -110,15 +110,17 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
               onKeyDown={(e) => { if (e.key === 'Enter' && form.title.trim()) handleSave() }}
               placeholder="Untitled task"
               autoFocus
+              aria-label="Task title"
               className="!h-auto !rounded-none !border-0 !border-b !border-transparent !bg-transparent !px-0 !py-1 !text-lg !font-semibold !shadow-none placeholder:text-muted-foreground/50 hover:!border-muted-foreground/30 focus-visible:!border-foreground focus-visible:!ring-0 dark:!bg-transparent"
             />
           </div>
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground font-medium">Description</label>
+          <div>
             <Textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Details..."
+              aria-label="Task description"
+              className="rounded-sm"
               rows={3}
             />
           </div>
@@ -128,7 +130,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
               <select
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="w-full h-9 rounded-md border bg-background px-3 text-sm text-foreground"
+                className="w-full h-9 rounded-sm border bg-background px-3 text-sm text-foreground"
               >
                 {columns.map((col) => (
                   <option key={col.id} value={col.id}>{col.label}</option>
@@ -137,7 +139,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
             </div>
             <div className="space-y-1">
               <label className="text-xs text-muted-foreground font-medium">Priority</label>
-              <div className="grid grid-cols-4 h-9 rounded-md border bg-background p-0.5 gap-0.5">
+              <div className="grid grid-cols-4 h-9 rounded-sm border bg-background p-0.5 gap-0.5">
                 {priorities.map((priority) => (
                   <button
                     key={priority.value}
@@ -177,7 +179,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
         </>
       ) : (
         <div className="space-y-3">
-          <div className="rounded-md border divide-y max-h-72 overflow-y-auto">
+          <div className="rounded-sm border divide-y max-h-72 overflow-y-auto">
             {events.length > 0 ? events.map((event) => (
               <div key={event._id} className="p-3 text-xs leading-relaxed">
                 <div className="text-foreground">{event.summary}</div>
@@ -201,10 +203,8 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
 export function TaskDialog({ task, isNew, open, onClose, onSave, onDelete, columns, defaultStatus, projectId }: TaskDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{isNew ? 'New Task' : 'Edit Task'}</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="rounded-lg sm:max-w-lg">
+        <DialogTitle className="sr-only">{isNew ? 'New Task' : 'Edit Task'}</DialogTitle>
         {open && (
           <TaskForm
             key={task?.id ?? `new-${defaultStatus}`}
