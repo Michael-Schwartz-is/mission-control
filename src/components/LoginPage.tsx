@@ -12,7 +12,7 @@ export function LoginPage() {
           <p className="text-sm text-muted-foreground">{t('login_desc')}</p>
         </div>
         <button
-          onClick={() => void signIn("google")}
+          onClick={() => void signIn("google", { redirectTo: window.location.href })}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-foreground text-background text-sm font-medium hover:bg-foreground/90 transition-colors"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
