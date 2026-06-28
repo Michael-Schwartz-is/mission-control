@@ -103,7 +103,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
       )}
       <div className="min-h-[310px]">
       {activeTab === 'info' ? (
-        <>
+        <div className="min-h-[310px] flex flex-col gap-3">
           <div>
             <Input
               value={form.title}
@@ -115,13 +115,13 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
               className="!h-auto !rounded-none !border-0 !border-b !border-transparent !bg-transparent !px-0 !py-1 !text-lg !font-semibold !shadow-none placeholder:text-muted-foreground/50 hover:!border-muted-foreground/30 focus-visible:!border-foreground focus-visible:!ring-0 dark:!bg-transparent"
             />
           </div>
-          <div>
+          <div className="flex-1 min-h-0">
             <Textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Details..."
               aria-label="Task description"
-              className="rounded-sm"
+              className="h-full min-h-[130px] resize-none rounded-sm [field-sizing:fixed]"
               rows={3}
             />
           </div>
@@ -177,7 +177,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
               <Button size="sm" onClick={handleSave}>{isNew ? 'Create' : 'Save'}</Button>
             </div>
           </div>
-        </>
+        </div>
       ) : (
         <div className="space-y-3">
           <div className="rounded-sm border divide-y h-[262px] overflow-y-auto">
