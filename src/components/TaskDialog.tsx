@@ -19,11 +19,11 @@ interface TaskDialogProps {
   projectId?: string
 }
 
-const priorities: Array<{ value: Task['priority']; label: string; shortcut: string }> = [
-  { value: 'urgent', label: 'Urgent', shortcut: '1' },
-  { value: 'high', label: 'High', shortcut: '2' },
-  { value: 'medium', label: 'Med', shortcut: '3' },
-  { value: 'low', label: 'Low', shortcut: '4' },
+const priorities: Array<{ value: Task['priority']; label: string; shortcut: string; code: string }> = [
+  { value: 'urgent', label: 'Urgent', shortcut: '1', code: 'Digit1' },
+  { value: 'high', label: 'High', shortcut: '2', code: 'Digit2' },
+  { value: 'medium', label: 'Med', shortcut: '3', code: 'Digit3' },
+  { value: 'low', label: 'Low', shortcut: '4', code: 'Digit4' },
 ]
 
 function formatDateTime(value?: string) {
@@ -66,7 +66,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
       const target = event.target as HTMLElement | null
       const tagName = target?.tagName
       if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') return
-      const priority = priorities.find((item) => item.shortcut === event.key)
+      const priority = priorities.find((item) => item.code === event.code)
       if (!priority) return
       event.preventDefault()
       setForm((current) => ({ ...current, priority: priority.value }))
