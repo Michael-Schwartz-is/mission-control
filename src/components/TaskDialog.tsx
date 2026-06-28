@@ -103,14 +103,14 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
       )}
       {activeTab === 'info' ? (
         <>
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground font-medium">Title</label>
+          <div>
             <Input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               onKeyDown={(e) => { if (e.key === 'Enter' && form.title.trim()) handleSave() }}
-              placeholder="Task title"
+              placeholder="Untitled task"
               autoFocus
+              className="!h-auto !rounded-none !border-0 !border-b !border-transparent !bg-transparent !px-0 !py-1 !text-lg !font-semibold !shadow-none placeholder:text-muted-foreground/50 hover:!border-muted-foreground/30 focus-visible:!border-foreground focus-visible:!ring-0 dark:!bg-transparent"
             />
           </div>
           <div className="space-y-1">
