@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import type { Task, Column } from '@/types'
@@ -18,6 +18,13 @@ interface TaskDialogProps {
   defaultStatus?: string
   projectId?: string
 }
+
+const priorities: Array<{ value: Task['priority']; label: string; shortcut: string }> = [
+  { value: 'urgent', label: 'Urgent', shortcut: '1' },
+  { value: 'high', label: 'High', shortcut: '2' },
+  { value: 'medium', label: 'Med', shortcut: '3' },
+  { value: 'low', label: 'Low', shortcut: '4' },
+]
 
 function formatDateTime(value?: string) {
   if (!value) return ''
@@ -51,6 +58,22 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
     api.taskEvents.listByTask,
     !isNew && task && projectId ? { projectId, taskId: task.id } : 'skip'
   ) ?? []
+
+  useEffect(() => {
+    if (activeTab !== 'info') return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!event.shiftKey) return
+      const target = event.target as HTMLElement | null
+      const tagName = target?.tagName
+      if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') return
+      const priority = priorities.find((item) => item.shortcut === event.key)
+      if (!priority) return
+      event.preventDefault()
+      setForm((current) => ({ ...current, priority: priority.value }))
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [activeTab])
 
   const handleSave = () => {
     if (!form.title.trim()) return
@@ -114,16 +137,23 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
             </div>
             <div className="space-y-1">
               <label className="text-xs text-muted-foreground font-medium">Priority</label>
-              <select
-                value={form.priority}
-                onChange={(e) => setForm({ ...form, priority: e.target.value as Task['priority'] })}
-                className="w-full h-9 rounded-md border bg-background px-3 text-sm text-foreground"
-              >
-                <option value="urgent">Urgent</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
+              <div className="grid grid-cols-4 h-9 rounded-md border bg-background p-0.5 gap-0.5">
+                {priorities.map((priority) => (
+                  <button
+                    key={priority.value}
+                    type="button"
+                    title={`Shift+${priority.shortcut}`}
+                    onClick={() => setForm({ ...form, priority: priority.value })}
+                    className={`rounded-sm px-1 text-[11px] font-medium transition-colors ${
+                      form.priority === priority.value
+                        ? 'bg-muted text-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    {priority.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           {!isNew && task && (
