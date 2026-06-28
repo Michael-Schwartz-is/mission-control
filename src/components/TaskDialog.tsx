@@ -101,6 +101,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
           </button>
         </div>
       )}
+      <div className="min-h-[310px]">
       {activeTab === 'info' ? (
         <>
           <div>
@@ -179,7 +180,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
         </>
       ) : (
         <div className="space-y-3">
-          <div className="rounded-sm border divide-y max-h-72 overflow-y-auto">
+          <div className="rounded-sm border divide-y h-[262px] overflow-y-auto">
             {events.length > 0 ? events.map((event) => (
               <div key={event._id} className="p-3 text-xs leading-relaxed">
                 <div className="text-foreground">{event.summary}</div>
@@ -196,6 +197,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }
