@@ -34,9 +34,15 @@ export const list = query({
               title: t.title,
               description: t.description,
               status: t.status,
-              priority: t.priority,
-              createdAt: t.createdAt,
-            })),
+          priority: t.priority,
+          createdAt: t.createdAt,
+          createdByName: t.createdByName,
+          createdByEmail: t.createdByEmail,
+          createdVia: t.createdVia,
+          updatedAt: t.updatedAt,
+          completedAt: t.completedAt,
+          sourceRefIds: t.sourceRefIds,
+        })),
         };
       })
     );

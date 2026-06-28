@@ -1,12 +1,40 @@
 import { internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { logTaskEvent } from "./provenance";
+import type { Id } from "./_generated/dataModel";
+
+type ImportColumn = { id: string; label: string };
+type ImportTask = {
+  id?: string;
+  title: string;
+  description?: string;
+  status?: string;
+  priority?: string;
+  createdAt?: string;
+  sourceRefIds?: Id<"sourceRefs">[];
+};
+type ImportProject = {
+  id: string;
+  name: string;
+  description?: string;
+  repo?: string;
+  stack?: string;
+  context?: string;
+  status?: string;
+  tasks?: ImportTask[];
+};
+type ImportData = {
+  global?: unknown;
+  columns?: ImportColumn[];
+  projects?: ImportProject[];
+};
 
 // Internal only — called by HTTP actions, not directly by clients
 
 export const getAll = internalQuery({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
-    const uid = userId as any; // Trust the HTTP action layer
+    const uid = userId as Id<"users">; // Trust the HTTP action layer
 
     // Global context
     const globalRow = await ctx.db
@@ -68,6 +96,12 @@ export const getAll = internalQuery({
             status: t.status,
             priority: t.priority,
             createdAt: t.createdAt,
+            createdByName: t.createdByName,
+            createdByEmail: t.createdByEmail,
+            createdVia: t.createdVia,
+            updatedAt: t.updatedAt,
+            completedAt: t.completedAt,
+            sourceRefIds: t.sourceRefIds,
           })),
       }));
 
@@ -79,10 +113,22 @@ export const importAll = internalMutation({
   args: {
     userId: v.string(),
     data: v.any(),
+    actorName: v.optional(v.string()),
+    actorEmail: v.optional(v.string()),
+    createdVia: v.optional(v.string()),
+    sourceArtifactId: v.optional(v.id("sourceArtifacts")),
   },
-  handler: async (ctx, { userId, data }) => {
-    const uid = userId as any;
-    const { global: globalData, columns, projects } = data as any;
+  handler: async (ctx, { userId, data, actorName, actorEmail, createdVia, sourceArtifactId }) => {
+    const uid = userId as Id<"users">;
+    const { global: globalData, columns, projects } = data as ImportData;
+    const now = new Date().toISOString();
+    const via = createdVia ?? "api";
+    const actor = {
+      userId: uid,
+      name: actorName ?? "API import",
+      email: actorEmail,
+      via,
+    };
 
     // Clear existing data
     const existingGlobal = await ctx.db
@@ -108,6 +154,21 @@ export const importAll = internalMutation({
       .withIndex("by_user", (q) => q.eq("userId", uid))
       .collect();
     for (const p of existingProjects) await ctx.db.delete(p._id);
+
+    const operationId = await ctx.db.insert("operations", {
+      userId: uid,
+      type: "bulkImport",
+      summary: `Imported ${projects?.length ?? 0} projects from API`,
+      actorUserId: uid,
+      actorName: actor.name,
+      actorEmail: actor.email,
+      createdVia: via,
+      createdAt: now,
+      sourceArtifactId,
+      projectsTouched: projects?.length ?? 0,
+      tasksCreated: projects?.reduce((total, p) => total + (p.tasks?.length ?? 0), 0) ?? 0,
+      tasksDeleted: existingTasks.length,
+    });
 
     // Import global context
     if (globalData) {
@@ -147,16 +208,38 @@ export const importAll = internalMutation({
         if (p.tasks) {
           for (let ti = 0; ti < p.tasks.length; ti++) {
             const t = p.tasks[ti];
+            const importedTaskId = t.id || crypto.randomUUID();
             await ctx.db.insert("tasks", {
               userId: uid,
               projectId: p.id,
-              taskId: t.id || crypto.randomUUID(),
+              taskId: importedTaskId,
               title: t.title,
               description: t.description || "",
               status: t.status || "backlog",
               priority: t.priority || "medium",
               sortOrder: ti,
-              createdAt: t.createdAt || new Date().toISOString(),
+              createdAt: t.createdAt || now,
+              createdByUserId: uid,
+              createdByName: actor.name,
+              createdByEmail: actor.email,
+              createdVia: via,
+              updatedAt: now,
+              completedAt: (t.status || "backlog") === "done" ? now : undefined,
+              sourceRefIds: t.sourceRefIds,
+            });
+            await logTaskEvent(ctx, {
+              userId: uid,
+              projectId: p.id,
+              taskId: importedTaskId,
+              type: "imported",
+              summary: `Imported task "${t.title}"`,
+              actor,
+              after: {
+                title: t.title,
+                status: t.status || "backlog",
+                priority: t.priority || "medium",
+              },
+              operationId,
             });
           }
         }

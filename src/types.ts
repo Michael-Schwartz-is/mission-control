@@ -10,6 +10,12 @@ export interface Task {
   status: string
   priority: 'urgent' | 'high' | 'medium' | 'low'
   createdAt: string
+  createdByName?: string
+  createdByEmail?: string
+  createdVia?: string
+  updatedAt?: string
+  completedAt?: string
+  sourceRefIds?: string[]
 }
 
 export interface Project {

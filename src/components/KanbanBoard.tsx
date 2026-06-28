@@ -104,6 +104,7 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
           onSave={handleSave}
           columns={columns}
           defaultStatus={defaultStatus}
+          projectId={project.id}
         />
       </div>
     )
@@ -168,6 +169,7 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
         onDelete={selectedTask ? () => onDeleteTask(selectedTask.id) : undefined}
         columns={columns}
         defaultStatus={defaultStatus}
+        projectId={project.id}
       />
     </div>
   )

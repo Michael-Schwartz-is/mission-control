@@ -1,6 +1,7 @@
 import { httpRouter } from "convex/server";
 import { auth } from "./auth";
 import { httpAction } from "./_generated/server";
+import type { ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 const http = httpRouter();
@@ -19,18 +20,23 @@ async function hashKey(key: string): Promise<string> {
 }
 
 async function resolveApiKeyUser(
-  ctx: any,
+  ctx: ActionCtx,
   req: Request
-): Promise<string | null> {
+): Promise<{ userId: string; actorName: string; createdVia: string } | null> {
   const authHeader = req.headers.get("Authorization") || "";
   if (!authHeader.startsWith("Bearer mc_")) return null;
   const rawKey = authHeader.slice(7);
   const keyHash = await hashKey(rawKey);
-  const userId = await ctx.runQuery(
+  const key = await ctx.runQuery(
     internal.apiKeys.resolveByHash,
     { keyHash }
   );
-  return userId;
+  if (!key) return null;
+  return {
+    userId: key.userId,
+    actorName: `API key: ${key.keyName}`,
+    createdVia: "api",
+  };
 }
 
 function corsHeaders() {
@@ -62,7 +68,7 @@ http.route({
         headers: { ...corsHeaders(), "Content-Type": "application/json" },
       });
     }
-    const data = await ctx.runQuery(internal.data.getAll, { userId });
+    const data = await ctx.runQuery(internal.data.getAll, { userId: userId.userId });
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders(), "Content-Type": "application/json" },
     });
@@ -82,7 +88,12 @@ http.route({
       });
     }
     const body = await req.json();
-    await ctx.runMutation(internal.data.importAll, { userId, data: body });
+    await ctx.runMutation(internal.data.importAll, {
+      userId: userId.userId,
+      data: body,
+      actorName: userId.actorName,
+      createdVia: userId.createdVia,
+    });
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders(), "Content-Type": "application/json" },
     });

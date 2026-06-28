@@ -66,6 +66,10 @@ export const resolveByHash = internalQuery({
       .withIndex("by_hash", (q) => q.eq("keyHash", keyHash))
       .unique();
     if (!key) return null;
-    return key.userId;
+    return {
+      userId: key.userId,
+      keyName: key.name,
+      keyPrefix: key.keyPrefix,
+    };
   },
 });

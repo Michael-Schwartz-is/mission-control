@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useQuery } from 'convex/react'
+import { api } from '../../convex/_generated/api'
 import type { Task, Column } from '@/types'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -14,15 +16,32 @@ interface TaskDialogProps {
   onDelete?: () => void
   columns: Column[]
   defaultStatus?: string
+  projectId?: string
 }
 
-function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStatus }: Omit<TaskDialogProps, 'open'>) {
+function formatDateTime(value?: string) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStatus, projectId }: Omit<TaskDialogProps, 'open'>) {
   const [form, setForm] = useState({
     title: task?.title ?? '',
     description: task?.description ?? '',
     status: task?.status ?? defaultStatus ?? 'todo',
     priority: task?.priority ?? 'medium' as Task['priority'],
   })
+  const events = useQuery(
+    api.taskEvents.listByTask,
+    !isNew && task && projectId ? { projectId, taskId: task.id } : 'skip'
+  ) ?? []
 
   const handleSave = () => {
     if (!form.title.trim()) return
@@ -78,6 +97,43 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
           </select>
         </div>
       </div>
+      {!isNew && task && (
+        <div className="rounded-md border bg-muted/20 p-3 space-y-3">
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <div className="text-muted-foreground">Created</div>
+              <div className="text-foreground">{formatDateTime(task.createdAt)}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">By</div>
+              <div className="text-foreground truncate">{task.createdByName || task.createdByEmail || 'Legacy'}</div>
+            </div>
+            {task.updatedAt && (
+              <div>
+                <div className="text-muted-foreground">Updated</div>
+                <div className="text-foreground">{formatDateTime(task.updatedAt)}</div>
+              </div>
+            )}
+            <div>
+              <div className="text-muted-foreground">Source</div>
+              <div className="text-foreground">{task.createdVia || 'legacy'}</div>
+            </div>
+          </div>
+          {events.length > 0 && (
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-muted-foreground">Activity</div>
+              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                {events.map((event) => (
+                  <div key={event._id} className="text-xs leading-relaxed">
+                    <span className="text-foreground">{event.summary}</span>
+                    <span className="text-muted-foreground"> · {event.actorName || event.actorEmail || event.createdVia} · {formatDateTime(event.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       <div className="flex justify-between pt-2">
         <div>
           {!isNew && onDelete && (
@@ -95,7 +151,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
   )
 }
 
-export function TaskDialog({ task, isNew, open, onClose, onSave, onDelete, columns, defaultStatus }: TaskDialogProps) {
+export function TaskDialog({ task, isNew, open, onClose, onSave, onDelete, columns, defaultStatus, projectId }: TaskDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-lg">
@@ -112,6 +168,7 @@ export function TaskDialog({ task, isNew, open, onClose, onSave, onDelete, colum
             onDelete={onDelete}
             columns={columns}
             defaultStatus={defaultStatus}
+            projectId={projectId}
           />
         )}
       </DialogContent>

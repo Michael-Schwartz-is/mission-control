@@ -16,6 +16,10 @@ import type * as data from "../data.js";
 import type * as globalContext from "../globalContext.js";
 import type * as http from "../http.js";
 import type * as projects from "../projects.js";
+import type * as provenance from "../provenance.js";
+import type * as sourceArtifacts from "../sourceArtifacts.js";
+import type * as sourceRefs from "../sourceRefs.js";
+import type * as taskEvents from "../taskEvents.js";
 import type * as tasks from "../tasks.js";
 import type * as users from "../users.js";
 
@@ -34,6 +38,10 @@ declare const fullApi: ApiFromModules<{
   globalContext: typeof globalContext;
   http: typeof http;
   projects: typeof projects;
+  provenance: typeof provenance;
+  sourceArtifacts: typeof sourceArtifacts;
+  sourceRefs: typeof sourceRefs;
+  taskEvents: typeof taskEvents;
   tasks: typeof tasks;
   users: typeof users;
 }>;

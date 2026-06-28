@@ -9,6 +9,12 @@ const priorityColors: Record<Task['priority'], string> = {
   low: 'bg-blue-500',
 }
 
+function formatShortDate(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
 interface TaskCardProps {
   task: Task
   onClick: () => void
@@ -52,6 +58,21 @@ export function TaskCard({ task, onClick, onDelete }: TaskCardProps) {
       {task.description && (
         <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
       )}
+      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
+        <span>{formatShortDate(task.createdAt)}</span>
+        {task.createdVia && (
+          <>
+            <span>·</span>
+            <span>{task.createdVia}</span>
+          </>
+        )}
+        {task.sourceRefIds?.length ? (
+          <>
+            <span>·</span>
+            <span>{task.sourceRefIds.length} source{task.sourceRefIds.length === 1 ? '' : 's'}</span>
+          </>
+        ) : null}
+      </div>
     </div>
   )
 }
