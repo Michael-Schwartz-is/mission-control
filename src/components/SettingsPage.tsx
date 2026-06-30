@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
+import type { Id } from '../../convex/_generated/dataModel'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { useConfirmDialog } from '@/hooks/useConfirmDialog'
 import { t } from '@/i18n'
 
 interface SettingsPageProps {
@@ -41,6 +43,7 @@ function ApiKeysSection() {
   const keys = useQuery(api.apiKeys.list) ?? []
   const createKey = useMutation(api.apiKeys.create)
   const removeKey = useMutation(api.apiKeys.remove)
+  const { confirm, confirmationDialog } = useConfirmDialog()
   const [newKeyName, setNewKeyName] = useState('')
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null)
 
@@ -49,6 +52,17 @@ function ApiKeysSection() {
     const result = await createKey({ name: newKeyName.trim() })
     setNewKeyValue(result.key)
     setNewKeyName('')
+  }
+
+  const requestRevokeKey = (key: { id: Id<'apiKeys'>; name: string; keyPrefix: string }) => {
+    confirm({
+      title: 'Revoke API key?',
+      description: `"${key.name}" (${key.keyPrefix}...) will stop working immediately.`,
+      confirmLabel: 'Revoke key',
+      onConfirm: async () => {
+        await removeKey({ id: key.id })
+      },
+    })
   }
 
   return (
@@ -70,7 +84,7 @@ function ApiKeysSection() {
         {keys.map((k) => (
           <SettingsRow key={k.id} label={k.name} description={`${k.keyPrefix}...`}>
             <button
-              onClick={() => removeKey({ id: k.id as any })}
+              onClick={() => requestRevokeKey(k)}
               className="text-xs text-muted-foreground hover:text-destructive transition-colors"
             >
               Revoke
@@ -90,12 +104,14 @@ function ApiKeysSection() {
           </Button>
         </div>
       </SettingsCard>
+      {confirmationDialog}
     </>
   )
 }
 
 export function SettingsPage({ globalContext, onGlobalChange, lang, onLangChange }: SettingsPageProps) {
   const currentUser = useQuery(api.users.currentUser)
+  const { confirm, confirmationDialog } = useConfirmDialog()
   const [globalForm, setGlobalForm] = useState<Record<string, string>>({ ...globalContext })
   const [saved, setSaved] = useState(false)
 
@@ -103,6 +119,19 @@ export function SettingsPage({ globalContext, onGlobalChange, lang, onLangChange
     onGlobalChange(globalForm)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  const requestRemoveField = (key: string) => {
+    confirm({
+      title: 'Remove field?',
+      description: `"${key || 'Untitled field'}" will be removed from this form. Save settings to apply the change.`,
+      confirmLabel: 'Remove field',
+      onConfirm: () => {
+        const newForm = { ...globalForm }
+        delete newForm[key]
+        setGlobalForm(newForm)
+      },
+    })
   }
 
   return (
@@ -169,11 +198,7 @@ export function SettingsPage({ globalContext, onGlobalChange, lang, onLangChange
                   placeholder="value"
                 />
                 <button
-                  onClick={() => {
-                    const newForm = { ...globalForm }
-                    delete newForm[key]
-                    setGlobalForm(newForm)
-                  }}
+                  onClick={() => requestRemoveField(key)}
                   className="text-muted-foreground/30 hover:text-destructive transition-colors text-xs shrink-0 px-1"
                 >
                   x
@@ -204,6 +229,7 @@ export function SettingsPage({ globalContext, onGlobalChange, lang, onLangChange
           <ApiKeysSection />
         </div>
       </div>
+      {confirmationDialog}
     </div>
   )
 }

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { Project, Task, Column } from '@/types'
 import { KanbanColumn } from './KanbanColumn'
 import { TaskDialog } from './TaskDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useConfirmDialog } from '@/hooks/useConfirmDialog'
 import { t } from '@/i18n'
 
 interface KanbanBoardProps {
@@ -20,6 +21,7 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateTask, onDeleteTask, onAddColumn, onDeleteColumn, newTaskTrigger }: KanbanBoardProps) {
+  const { confirm, confirmationDialog } = useConfirmDialog()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isNew, setIsNew] = useState(false)
@@ -76,6 +78,30 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
     setAddingColumn(false)
   }
 
+  const requestDeleteTask = useCallback((task: Task) => {
+    confirm({
+      title: 'Delete task?',
+      description: `"${task.title}" will be permanently deleted.`,
+      confirmLabel: 'Delete task',
+      onConfirm: () => {
+        onDeleteTask(task.id)
+        if (selectedTask?.id === task.id) {
+          setDialogOpen(false)
+          setSelectedTask(null)
+        }
+      },
+    })
+  }, [confirm, onDeleteTask, selectedTask])
+
+  const requestDeleteColumn = useCallback((column: Column) => {
+    confirm({
+      title: 'Delete column?',
+      description: `"${column.label}" will be permanently deleted.`,
+      confirmLabel: 'Delete column',
+      onConfirm: () => onDeleteColumn(column.id),
+    })
+  }, [confirm, onDeleteColumn])
+
   const tasksByStatus = (status: string) =>
     project.tasks.filter((t) => t.status === status)
 
@@ -123,8 +149,8 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
                 label={col.label}
                 tasks={tasksByStatus(col.id)}
                 onTaskClick={openEdit}
-                onTaskDelete={onDeleteTask}
-                onColumnDelete={onDeleteColumn}
+                onTaskDelete={requestDeleteTask}
+                onColumnDelete={() => requestDeleteColumn(col)}
                 onQuickAdd={(title, status) => onAddTask({ title, status })}
                 onAddTaskClick={(status) => {
                   setSelectedTask(null)
@@ -167,11 +193,12 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onSave={handleSave}
-        onDelete={selectedTask ? () => onDeleteTask(selectedTask.id) : undefined}
+        onDelete={selectedTask ? () => requestDeleteTask(selectedTask) : undefined}
         columns={columns}
         defaultStatus={defaultStatus}
         projectId={project.id}
       />
+      {confirmationDialog}
     </div>
   )
 }

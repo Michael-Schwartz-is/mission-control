@@ -16,6 +16,7 @@ interface SidebarProps {
   userName: string
   userImage?: string | null
   onSettingsClick: () => void
+  onKeyboardShortcutsClick: () => void
   onAdminClick?: () => void
   onLogout?: () => void
   newProjectTrigger?: number
@@ -69,7 +70,7 @@ function UserDropdown({ userName, userImage, onLogout }: {
   )
 }
 
-export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDeleteProject, userName, userImage, onSettingsClick, onAdminClick, onLogout, newProjectTrigger, inSettings }: SidebarProps) {
+export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDeleteProject, userName, userImage, onSettingsClick, onKeyboardShortcutsClick, onAdminClick, onLogout, newProjectTrigger, inSettings }: SidebarProps) {
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
   const [lastTrigger, setLastTrigger] = useState(0)
@@ -166,7 +167,7 @@ export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDelete
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        if (confirm(`Delete "${project.name}"?`)) onDeleteProject(project.id)
+                        onDeleteProject(project.id)
                       }}
                       className="absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center text-sidebar-foreground/0 group-hover:text-sidebar-foreground/30 hover:!text-destructive transition-colors text-[10px]"
                     >
@@ -193,6 +194,12 @@ export function Sidebar({ projects, selectedId, onSelect, onAddProject, onDelete
 
           </ScrollArea>
           <div className="p-2 space-y-0.5">
+            <button
+              onClick={onKeyboardShortcutsClick}
+              className="w-full text-left px-3 py-1.5 rounded-md text-xs text-sidebar-foreground/50 hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/50 transition-colors"
+            >
+              {t('keyboard_shortcuts')}
+            </button>
             {onAdminClick && (
               <button
                 onClick={onAdminClick}

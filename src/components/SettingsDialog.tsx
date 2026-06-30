@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
+import type { Id } from '../../convex/_generated/dataModel'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { useConfirmDialog } from '@/hooks/useConfirmDialog'
 
 export interface AppSettings {
   rtl: boolean
@@ -43,6 +45,7 @@ function ApiKeysSection() {
   const keys = useQuery(api.apiKeys.list) ?? []
   const createKey = useMutation(api.apiKeys.create)
   const removeKey = useMutation(api.apiKeys.remove)
+  const { confirm, confirmationDialog } = useConfirmDialog()
   const [newKeyName, setNewKeyName] = useState('')
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null)
 
@@ -51,6 +54,17 @@ function ApiKeysSection() {
     const result = await createKey({ name: newKeyName.trim() })
     setNewKeyValue(result.key)
     setNewKeyName('')
+  }
+
+  const requestRevokeKey = (key: { id: Id<'apiKeys'>; name: string; keyPrefix: string }) => {
+    confirm({
+      title: 'Revoke API key?',
+      description: `"${key.name}" (${key.keyPrefix}...) will stop working immediately.`,
+      confirmLabel: 'Revoke key',
+      onConfirm: async () => {
+        await removeKey({ id: key.id })
+      },
+    })
   }
 
   return (
@@ -72,7 +86,7 @@ function ApiKeysSection() {
             <span className="font-medium text-foreground">{k.name}</span>
             <span className="text-muted-foreground">{k.keyPrefix}...</span>
             <span className="flex-1" />
-            <button onClick={() => removeKey({ id: k.id as any })} className="text-muted-foreground hover:text-destructive transition-colors">delete</button>
+            <button onClick={() => requestRevokeKey(k)} className="text-muted-foreground hover:text-destructive transition-colors">delete</button>
           </div>
         ))}
       </div>
@@ -87,6 +101,7 @@ function ApiKeysSection() {
         />
         <Button size="sm" variant="outline" onClick={handleCreate}>Generate</Button>
       </div>
+      {confirmationDialog}
     </div>
   )
 }

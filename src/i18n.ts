@@ -2,6 +2,7 @@ const translations: Record<string, Record<string, string>> = {
   en: {
     // Sidebar
     'preferences': 'Preferences',
+    'keyboard_shortcuts': 'Keyboard shortcuts',
     'back_to_projects': 'Back to projects',
     'new_project_placeholder': 'Project name — Enter to create',
     'sign_out': 'Sign out',
@@ -82,6 +83,7 @@ const translations: Record<string, Record<string, string>> = {
   he: {
     // Sidebar
     'preferences': 'העדפות',
+    'keyboard_shortcuts': 'קיצורי מקלדת',
     'back_to_projects': 'חזרה לפרויקטים',
     'new_project_placeholder': 'שם פרויקט — Enter ליצירה',
     'sign_out': 'התנתק',

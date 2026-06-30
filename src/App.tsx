@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useAuth } from "@/auth";
@@ -8,6 +8,8 @@ import { ProjectDetails } from "@/components/ProjectDetails";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { SettingsPage } from "@/components/SettingsPage";
 import { AdminPage } from "@/components/AdminPage";
+import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import type { Project } from "@/types";
 import { t, setLanguage, isRtl } from "@/i18n";
@@ -60,15 +62,26 @@ function writePref(key: string, value: unknown) {
   localStorage.setItem(`mc:${key}`, JSON.stringify(value));
 }
 
+function projectDeleteDescription(project: Project) {
+  const taskCount = project.tasks.length;
+  const taskText = taskCount === 1 ? "1 task" : `${taskCount} tasks`;
+  return taskCount > 0
+    ? `"${project.name}" and its ${taskText} will be permanently deleted.`
+    : `"${project.name}" will be permanently deleted.`;
+}
+
 function Dashboard() {
   const { signOut } = useAuth();
+  const { confirm, confirmationDialog } = useConfirmDialog();
 
   // Current user from Google OAuth
   const currentUser = useQuery(api.users.currentUser);
 
   // Reactive queries
-  const projects = useQuery(api.projects.list) ?? [];
-  const columns = useQuery(api.columns.list) ?? [];
+  const queriedProjects = useQuery(api.projects.list);
+  const queriedColumns = useQuery(api.columns.list);
+  const projects = useMemo(() => queriedProjects ?? [], [queriedProjects]);
+  const columns = useMemo(() => queriedColumns ?? [], [queriedColumns]);
   const adminStats = useQuery(api.admin.stats);
   const isAdmin = adminStats !== null && adminStats !== undefined;
   const globalContext = useQuery(api.globalContext.get) ?? {};
@@ -98,6 +111,7 @@ function Dashboard() {
   const [newProjectTrigger, setNewProjectTrigger] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [lang, setLang] = useState(() => {
     const saved = readPref("lang", "en");
     setLanguage(saved);
@@ -138,21 +152,61 @@ function Dashboard() {
 
   const triggerNewTask = useCallback(() => {
     switchTab("board");
+    setShowSettings(false);
+    setShowAdmin(false);
     setNewTaskTrigger((n) => n + 1);
   }, [switchTab]);
 
   useKeyboardShortcuts({
     n: triggerNewTask,
-    p: () => setNewProjectTrigger((n) => n + 1),
-    b: () => switchTab("board"),
-    d: () => switchTab("details"),
+    p: () => {
+      setShowSettings(false);
+      setShowAdmin(false);
+      setNewProjectTrigger((n) => n + 1);
+    },
+    b: () => {
+      setShowSettings(false);
+      setShowAdmin(false);
+      switchTab("board");
+    },
+    d: () => {
+      setShowSettings(false);
+      setShowAdmin(false);
+      switchTab("details");
+    },
     s: toggleSidebar,
-    ",": () => setShowSettings((v) => !v),
+    ",": () => {
+      setShowAdmin(false);
+      setShowSettings((v) => !v);
+    },
+    "?": () => setShowKeyboardShortcuts(true),
   });
 
   const userName = currentUser?.name || "User";
   const userImage = currentUser?.image;
   const selected = projects.find((p) => p.id === effectiveSelectedId) ?? null;
+
+  const deleteProject = useCallback(async (id: string) => {
+    await removeProject({ projectId: id });
+    if (effectiveSelectedId === id) {
+      const remaining = projects.filter((p) => p.id !== id);
+      handleSelectProject(remaining[0]?.id ?? "");
+    }
+  }, [effectiveSelectedId, handleSelectProject, projects, removeProject]);
+
+  const requestDeleteProject = useCallback((project: Project) => {
+    confirm({
+      title: "Delete project?",
+      description: projectDeleteDescription(project),
+      confirmLabel: "Delete project",
+      onConfirm: () => deleteProject(project.id),
+    });
+  }, [confirm, deleteProject]);
+
+  const requestDeleteProjectById = useCallback((id: string) => {
+    const project = projects.find((p) => p.id === id);
+    if (project) requestDeleteProject(project as Project);
+  }, [projects, requestDeleteProject]);
 
   return (
     <div className="flex h-screen relative" dir={rtl ? "rtl" : "ltr"}>
@@ -173,22 +227,21 @@ function Dashboard() {
             setShowSettings(false);
             handleSelectProject(id);
           }}
-          onDeleteProject={async (id) => {
-            await removeProject({ projectId: id });
-            if (effectiveSelectedId === id) {
-              const remaining = projects.filter((p) => p.id !== id);
-              handleSelectProject(remaining[0]?.id ?? "");
-            }
-          }}
+          onDeleteProject={requestDeleteProjectById}
           userName={userName}
           userImage={userImage}
           onSettingsClick={() => { setShowSettings(true); setShowAdmin(false) }}
+          onKeyboardShortcutsClick={() => setShowKeyboardShortcuts(true)}
           onAdminClick={isAdmin ? () => { setShowAdmin(true); setShowSettings(false) } : undefined}
           onLogout={() => void signOut()}
           newProjectTrigger={newProjectTrigger}
           inSettings={showSettings}
         />
       </div>
+      <KeyboardShortcutsDialog
+        open={showKeyboardShortcuts}
+        onClose={() => setShowKeyboardShortcuts(false)}
+      />
       <button
         onClick={toggleSidebar}
         className={`absolute top-1/2 -translate-y-1/2 z-10 w-4 h-8 bg-border hover:bg-muted-foreground/30 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all duration-200 ${rtl ? "rounded-l-md" : "rounded-r-md"}`}
@@ -247,12 +300,7 @@ function Dashboard() {
               )}
               <div className="flex-1" />
               <ProjectMenu
-                onDelete={async () => {
-                  if (!confirm(`${t('delete_project')}: "${selected.name}"?`)) return;
-                  await removeProject({ projectId: selected.id });
-                  const remaining = projects.filter((p) => p.id !== selected.id);
-                  handleSelectProject(remaining[0]?.id ?? "");
-                }}
+                onDelete={() => requestDeleteProject(selected as Project)}
               />
             </div>
             {/* Desktop: original layout */}
@@ -287,12 +335,7 @@ function Dashboard() {
                 </button>
               )}
               <ProjectMenu
-                onDelete={async () => {
-                  if (!confirm(`${t('delete_project')}: "${selected.name}"?`)) return;
-                  await removeProject({ projectId: selected.id });
-                  const remaining = projects.filter((p) => p.id !== selected.id);
-                  handleSelectProject(remaining[0]?.id ?? "");
-                }}
+                onDelete={() => requestDeleteProject(selected as Project)}
               />
             </div>
             {activeTab === "details" ? (
@@ -358,6 +401,7 @@ function Dashboard() {
             </div>
           </div>
         )}
+      {confirmationDialog}
       </div>
     </div>
   );

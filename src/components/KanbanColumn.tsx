@@ -11,7 +11,7 @@ interface KanbanColumnProps {
   label: string
   tasks: Task[]
   onTaskClick: (task: Task) => void
-  onTaskDelete: (taskId: string) => void
+  onTaskDelete: (task: Task) => void
   onColumnDelete?: (columnId: string) => void
   onQuickAdd?: (title: string, status: string) => void
   onAddTaskClick?: (status: string) => void
@@ -62,7 +62,7 @@ export function KanbanColumn({ id, label, tasks, onTaskClick, onTaskDelete, onCo
                   alert('Move or delete all tasks in this column first.')
                   return
                 }
-                if (confirm(`Delete "${label}" column?`)) onColumnDelete(id)
+                onColumnDelete(id)
               }}
               className="text-[10px] text-muted-foreground/0 group-hover/col:text-muted-foreground/40 hover:!text-destructive transition-colors"
             >
@@ -77,7 +77,7 @@ export function KanbanColumn({ id, label, tasks, onTaskClick, onTaskDelete, onCo
             key={task.id}
             task={task}
             onClick={() => onTaskClick(task)}
-            onDelete={() => onTaskDelete(task.id)}
+            onDelete={() => onTaskDelete(task)}
           />
         ))}
         {adding ? (

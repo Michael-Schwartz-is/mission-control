@@ -9,6 +9,10 @@ function isInputFocused() {
   return tag === 'input' || tag === 'textarea' || tag === 'select' || (el as HTMLElement).isContentEditable
 }
 
+function isModalOpen() {
+  return document.querySelector('[data-slot="dialog-content"]') !== null
+}
+
 export function useKeyboardShortcuts(shortcuts: ShortcutMap) {
   const shortcutsRef = useRef(shortcuts)
   shortcutsRef.current = shortcuts
@@ -16,6 +20,7 @@ export function useKeyboardShortcuts(shortcuts: ShortcutMap) {
   const subscribe = useCallback((onStoreChange: () => void) => {
     const handler = (e: KeyboardEvent) => {
       if (isInputFocused()) return
+      if (isModalOpen()) return
       if (e.metaKey || e.ctrlKey || e.altKey) return
 
       const fn = shortcutsRef.current[e.key]

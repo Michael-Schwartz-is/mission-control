@@ -279,7 +279,7 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
           <div className="flex justify-between pt-2">
             <div>
               {!isNew && onDelete && (
-                <Button variant="destructive" size="sm" onClick={() => { onDelete(); onClose() }}>
+                <Button variant="destructive" size="sm" onClick={onDelete}>
                   Delete
                 </Button>
               )}
