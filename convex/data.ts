@@ -10,6 +10,7 @@ type ImportTask = {
   description?: string;
   status?: string;
   priority?: string;
+  checklist?: { id: string; text: string; done: boolean }[];
   createdAt?: string;
   sourceRefIds?: Id<"sourceRefs">[];
 };
@@ -95,6 +96,7 @@ export const getAll = internalQuery({
             description: t.description,
             status: t.status,
             priority: t.priority,
+            checklist: t.checklist,
             createdAt: t.createdAt,
             createdByName: t.createdByName,
             createdByEmail: t.createdByEmail,
@@ -217,6 +219,7 @@ export const importAll = internalMutation({
               description: t.description || "",
               status: t.status || "backlog",
               priority: t.priority || "medium",
+              checklist: t.checklist,
               sortOrder: ti,
               createdAt: t.createdAt || now,
               createdByUserId: uid,
@@ -238,6 +241,7 @@ export const importAll = internalMutation({
                 title: t.title,
                 status: t.status || "backlog",
                 priority: t.priority || "medium",
+                checklist: t.checklist,
               },
               operationId,
             });

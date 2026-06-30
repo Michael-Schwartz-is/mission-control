@@ -11,8 +11,8 @@ interface KanbanBoardProps {
   project: Project
   columns: Column[]
   onMoveTask: (taskId: string, newStatus: string) => void
-  onAddTask: (task: { title: string; description?: string; status?: string; priority?: string }) => void
-  onUpdateTask: (taskId: string, updates: { title?: string; description?: string; status?: string; priority?: string }) => void
+  onAddTask: (task: { title: string; description?: string; status?: string; priority?: string; checklist?: Task['checklist'] }) => void
+  onUpdateTask: (taskId: string, updates: { title?: string; description?: string; status?: string; priority?: string; checklist?: Task['checklist'] }) => void
   onDeleteTask: (taskId: string) => void
   onAddColumn: (label: string) => void
   onDeleteColumn: (columnId: string) => void
@@ -62,6 +62,7 @@ export function KanbanBoard({ project, columns, onMoveTask, onAddTask, onUpdateT
         description: form.description || '',
         status: form.status || 'todo',
         priority: form.priority || 'medium',
+        checklist: form.checklist,
       })
     } else if (selectedTask) {
       onUpdateTask(selectedTask.id, form)

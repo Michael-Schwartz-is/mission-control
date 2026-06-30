@@ -43,6 +43,11 @@ export default defineSchema({
     description: v.string(),
     status: v.string(),
     priority: v.string(),
+    checklist: v.optional(v.array(v.object({
+      id: v.string(),
+      text: v.string(),
+      done: v.boolean(),
+    }))),
     sortOrder: v.number(),
     createdAt: v.string(),
     createdByUserId: v.optional(v.id("users")),

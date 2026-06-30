@@ -28,6 +28,9 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onClick, onDelete }: TaskCardProps) {
+  const checklist = task.checklist ?? []
+  const doneCount = checklist.filter((item) => item.done).length
+  const checklistProgress = checklist.length > 0 ? (doneCount / checklist.length) * 100 : 0
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: { task },
@@ -56,13 +59,21 @@ export function TaskCard({ task, onClick, onDelete }: TaskCardProps) {
         x
       </button>
       <div className="pr-4">
-        <span className="text-sm font-medium leading-tight">
+        <span className="text-base font-medium leading-tight">
           <span className={cn('inline-block w-2 h-2 rounded-full mr-1.5 align-middle', priorityColors[task.priority])} />
           {task.title}
         </span>
       </div>
       {task.description && (
         <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
+      )}
+      {checklist.length > 0 && (
+        <div className="space-y-1">
+          <div className="h-1 rounded-full bg-muted overflow-hidden">
+            <div className="h-full rounded-full bg-primary/70" style={{ width: `${checklistProgress}%` }} />
+          </div>
+          <div className="text-[10px] text-muted-foreground/70">{doneCount}/{checklist.length}</div>
+        </div>
       )}
       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
         <span>{formatShortDate(task.createdAt)}</span>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import type { Task, Column } from '@/types'
+import { Check, Plus, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -53,7 +54,10 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
     description: task?.description ?? '',
     status: task?.status ?? defaultStatus ?? 'todo',
     priority: task?.priority ?? 'medium' as Task['priority'],
+    checklist: task?.checklist ?? [],
   })
+  const [showChecklist, setShowChecklist] = useState((task?.checklist?.length ?? 0) > 0)
+  const [newChecklistText, setNewChecklistText] = useState('')
   const events = useQuery(
     api.taskEvents.listByTask,
     !isNew && task && projectId ? { projectId, taskId: task.id } : 'skip'
@@ -77,8 +81,35 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
 
   const handleSave = () => {
     if (!form.title.trim()) return
-    onSave(form)
+    onSave({
+      ...form,
+      checklist: form.checklist.filter((item) => item.text.trim()),
+    })
     onClose()
+  }
+
+  const addChecklistItem = () => {
+    const text = newChecklistText.trim()
+    if (!text) return
+    setForm((current) => ({
+      ...current,
+      checklist: [...current.checklist, { id: crypto.randomUUID(), text, done: false }],
+    }))
+    setNewChecklistText('')
+  }
+
+  const updateChecklistItem = (id: string, updates: Partial<NonNullable<Task['checklist']>[number]>) => {
+    setForm((current) => ({
+      ...current,
+      checklist: current.checklist.map((item) => item.id === id ? { ...item, ...updates } : item),
+    }))
+  }
+
+  const removeChecklistItem = (id: string) => {
+    setForm((current) => ({
+      ...current,
+      checklist: current.checklist.filter((item) => item.id !== id),
+    }))
   }
 
   return (
@@ -124,6 +155,87 @@ function TaskForm({ task, isNew, onSave, onClose, onDelete, columns, defaultStat
               className="h-full min-h-[130px] resize-none rounded-sm [field-sizing:fixed]"
               rows={3}
             />
+          </div>
+          <div className="space-y-2">
+            {!showChecklist && form.checklist.length === 0 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-fit rounded-sm px-2 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setShowChecklist(true)}
+              >
+                <Plus className="mr-1 size-3.5" />
+                Add Checklist
+              </Button>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground font-medium">Checklist</label>
+                  {form.checklist.length > 0 && (
+                    <span className="text-[11px] text-muted-foreground">
+                      {form.checklist.filter((item) => item.done).length}/{form.checklist.length}
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  {form.checklist.map((item) => (
+                    <div key={item.id} className="group flex min-h-10 items-center gap-3 rounded-sm px-1 transition-colors hover:bg-muted/20">
+                      <button
+                        type="button"
+                        onClick={() => updateChecklistItem(item.id, { done: !item.done })}
+                        className={`flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                          item.done
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-muted-foreground/30 bg-transparent text-transparent hover:border-muted-foreground/60'
+                        }`}
+                        aria-label={item.done ? 'Mark checklist item incomplete' : 'Mark checklist item complete'}
+                        aria-pressed={item.done}
+                      >
+                        <Check className="size-3 stroke-[3]" />
+                      </button>
+                      <Input
+                        value={item.text}
+                        onChange={(e) => updateChecklistItem(item.id, { text: e.target.value })}
+                        aria-label="Checklist item"
+                        className={`h-9 flex-1 rounded-none border-0 border-b border-transparent bg-transparent px-0 text-sm shadow-none transition-colors placeholder:text-muted-foreground/50 hover:border-muted-foreground/20 focus-visible:border-muted-foreground/50 focus-visible:ring-0 dark:bg-transparent ${
+                          item.done ? 'text-muted-foreground' : 'text-foreground/85'
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeChecklistItem(item.id)}
+                        className="flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground/0 transition-colors hover:bg-destructive/10 hover:text-destructive group-hover:text-muted-foreground/60"
+                        aria-label="Remove checklist item"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="group flex min-h-10 items-center gap-3 rounded-sm px-1 transition-colors hover:bg-muted/20">
+                    <button
+                      type="button"
+                      onClick={addChecklistItem}
+                      className="flex size-5 shrink-0 items-center justify-center rounded-full border border-dashed border-muted-foreground/25 text-muted-foreground/55 transition-colors hover:border-muted-foreground/50 hover:text-foreground"
+                      aria-label="Add checklist item"
+                    >
+                      <Plus className="size-3" />
+                    </button>
+                    <Input
+                      value={newChecklistText}
+                      onChange={(e) => setNewChecklistText(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addChecklistItem() } }}
+                      placeholder="Add checklist item"
+                      aria-label="New checklist item"
+                      className="h-9 flex-1 rounded-none border-0 border-b border-transparent bg-transparent px-0 text-sm text-foreground/85 shadow-none transition-colors placeholder:text-muted-foreground/45 hover:border-muted-foreground/20 focus-visible:border-muted-foreground/50 focus-visible:ring-0 dark:bg-transparent"
+                    />
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={addChecklistItem}>
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">

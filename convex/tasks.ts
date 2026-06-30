@@ -10,6 +10,11 @@ export const create = mutation({
     description: v.optional(v.string()),
     status: v.optional(v.string()),
     priority: v.optional(v.string()),
+    checklist: v.optional(v.array(v.object({
+      id: v.string(),
+      text: v.string(),
+      done: v.boolean(),
+    }))),
     sourceRefIds: v.optional(v.array(v.id("sourceRefs"))),
   },
   handler: async (ctx, args) => {
@@ -32,6 +37,7 @@ export const create = mutation({
       description: args.description ?? "",
       status: args.status ?? "backlog",
       priority: args.priority ?? "medium",
+      checklist: args.checklist,
       sortOrder: existing.length,
       createdAt: now,
       createdByUserId: actor.userId,
@@ -53,6 +59,7 @@ export const create = mutation({
         title: args.title,
         status: args.status ?? "backlog",
         priority: args.priority ?? "medium",
+        checklist: args.checklist,
       },
     });
     return taskId;
@@ -68,6 +75,11 @@ export const update = mutation({
       description: v.optional(v.string()),
       status: v.optional(v.string()),
       priority: v.optional(v.string()),
+      checklist: v.optional(v.array(v.object({
+        id: v.string(),
+        text: v.string(),
+        done: v.boolean(),
+      }))),
       sourceRefIds: v.optional(v.array(v.id("sourceRefs"))),
     }),
   },
@@ -114,6 +126,7 @@ export const update = mutation({
         description: task.description,
         status: task.status,
         priority: task.priority,
+        checklist: task.checklist,
         sourceRefIds: task.sourceRefIds,
       },
       after: updates,

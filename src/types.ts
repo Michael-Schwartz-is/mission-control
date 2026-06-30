@@ -3,12 +3,19 @@ export interface Column {
   label: string
 }
 
+export interface ChecklistItem {
+  id: string
+  text: string
+  done: boolean
+}
+
 export interface Task {
   id: string
   title: string
   description: string
   status: string
   priority: 'urgent' | 'high' | 'medium' | 'low'
+  checklist?: ChecklistItem[]
   createdAt: string
   createdByName?: string
   createdByEmail?: string
